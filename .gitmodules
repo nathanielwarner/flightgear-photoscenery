@@ -1,0 +1,12 @@
+[submodule "simgear"]
+	path = simgear
+	url = https://git.code.sf.net/p/flightgear/simgear
+	branch = release/2020.2
+[submodule "flightgear"]
+	path = flightgear
+	url = https://git.code.sf.net/p/flightgear/flightgear
+	branch = release/2020.2
+[submodule "fgdata"]
+	path = fgdata
+	url = https://git.code.sf.net/p/flightgear/fgdata
+	branch = release/2020.2

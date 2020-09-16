@@ -1,0 +1,660 @@
+diff --git a/Effects/agriculture.eff b/Effects/agriculture.eff
+index a5a2c9818..336a42215 100644
+--- a/Effects/agriculture.eff
++++ b/Effects/agriculture.eff
+@@ -153,6 +153,10 @@
+     <predicate>
+       <and>
+         <property>/sim/rendering/shaders/skydome</property>
++        <equal>
++          <value type="float">0.0</value>
++          <float-property>/sim/rendering/photoscenery/enabled</float-property>
++        </equal>
+         <and>
+           <less-equal>
+             <value type="float">6.0</value>
+@@ -162,7 +166,7 @@
+             <value type="float">6.0</value>
+             <float-property>/sim/rendering/shaders/transition</float-property>
+           </less-equal>
+-		  <less-equal>
++		      <less-equal>
+             <value type="float">1.0</value>
+             <float-property>/sim/rendering/shaders/crop</float-property>
+           </less-equal>
+diff --git a/Effects/crop.eff b/Effects/crop.eff
+index 5e7d265fa..6eabab455 100644
+--- a/Effects/crop.eff
++++ b/Effects/crop.eff
+@@ -23,12 +23,16 @@
+   <technique n="9">
+     <predicate>
+       <and>
+-	    <property>/sim/rendering/shaders/quality-level</property>
++	      <property>/sim/rendering/shaders/quality-level</property>
+         <property>/sim/rendering/shaders/crop</property>
+-		<equal>
+-			<value type="float">0.0</value>
+-			<float-property>/sim/rendering/rembrandt/enabled</float-property>
+-		</equal>
++        <equal>
++          <value type="float">0.0</value>
++          <float-property>/sim/rendering/photoscenery/enabled</float-property>
++        </equal>
++        <equal>
++          <value type="float">0.0</value>
++          <float-property>/sim/rendering/rembrandt/enabled</float-property>
++        </equal>
+         <or>
+           <less-equal>
+             <value type="float">2.0</value>
+diff --git a/Effects/landmass.eff b/Effects/landmass.eff
+index 3198ff71f..aea9858e7 100644
+--- a/Effects/landmass.eff
++++ b/Effects/landmass.eff
+@@ -50,6 +50,10 @@
+ 			<and>
+ 				<property>/sim/rendering/shaders/quality-level</property>
+ 				<property>/sim/rendering/shaders/landmass</property>
++				<equal>
++					<value type="float">0.0</value>
++					<float-property>/sim/rendering/photoscenery/enabled</float-property>
++				</equal>
+ 				<less-equal>
+ 					<value type="float">4.0</value>
+ 					<float-property>/sim/rendering/shaders/landmass</float-property>
+@@ -392,6 +396,10 @@
+ 					<value type="float">0.0</value>
+ 					<float-property>/sim/rendering/rembrandt/enabled</float-property>
+ 				</equal>
++				<equal>
++					<value type="float">0.0</value>
++					<float-property>/sim/rendering/photoscenery/enabled</float-property>
++        		</equal>
+ 				<or>
+ 					<less-equal>
+ 						<value type="float">2.0</value>
+diff --git a/Effects/terrain-default.eff b/Effects/terrain-default.eff
+index d88718fb1..0340e88bc 100644
+--- a/Effects/terrain-default.eff
++++ b/Effects/terrain-default.eff
+@@ -320,6 +320,10 @@
+         <fragment-shader>Shaders/hazes.frag</fragment-shader>
+         <fragment-shader>Shaders/secondary_lights.frag</fragment-shader>
+         <fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
++        <attribute>
++          <name>overlayTexCoord</name>
++          <index>14</index>
++        </attribute>
+       </program>
+ 	  <uniform>
+         <name>grain_strength</name>
+@@ -825,6 +829,11 @@
+         <value>2</value>
+         <!-- AMBIENT_AND_DIFFUSE -->
+       </uniform>
++      <uniform>
++        <name>overlay</name>
++        <type>sampler-2d</type>
++        <value type="int">15</value>
++      </uniform>
+       <depth>
+         <function>lequal</function>
+    <!--     <write-mask type="bool">false</write-mask> -->
+@@ -940,6 +949,10 @@
+         <fragment-shader>Shaders/noise.frag</fragment-shader>
+         <fragment-shader>Shaders/hazes.frag</fragment-shader>
+         <fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
++        <attribute>
++          <name>overlayTexCoord</name>
++          <index>14</index>
++        </attribute>
+       </program>
+       <uniform>
+         <name>visibility</name>
+@@ -1128,6 +1141,11 @@
+         <value>2</value>
+         <!-- AMBIENT_AND_DIFFUSE -->
+       </uniform>
++      <uniform>
++        <name>overlay</name>
++        <type>sampler-2d</type>
++        <value type="int">15</value>
++      </uniform>
+       <depth>
+         <function>lequal</function>
+         <!--><write-mask type="bool">false</write-mask> -->
+@@ -1224,8 +1242,12 @@
+         <vertex-shader>Shaders/generic-ALS-base.vert</vertex-shader>
+         <fragment-shader>Shaders/terrain-ALS-base.frag</fragment-shader>
+         <fragment-shader>Shaders/hazes.frag</fragment-shader>
+-	<fragment-shader>Shaders/noise.frag</fragment-shader>
+-	<fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
++	      <fragment-shader>Shaders/noise.frag</fragment-shader>
++	      <fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
++        <attribute>
++          <name>overlayTexCoord</name>
++          <index>14</index>
++        </attribute>
+       </program>
+       <uniform>
+         <name>visibility</name>
+@@ -1349,6 +1371,11 @@
+         <value>2</value>
+         <!-- AMBIENT_AND_DIFFUSE -->
+       </uniform>
++      <uniform>
++        <name>overlay</name>
++        <type>sampler-2d</type>
++        <value type="int">15</value>
++      </uniform>
+       <depth>
+         <function>lequal</function>
+ <!--        <write-mask type="bool">false</write-mask>  -->
+@@ -1427,8 +1454,13 @@
+   <technique n="11">
+     <predicate>
+       <and>
+-		<property>/sim/rendering/shaders/quality-level</property>
+-        <property>/sim/rendering/shaders/generic</property>
++        <or>
++          <property>/sim/rendering/photoscenery/enabled</property>
++          <and>
++            <property>/sim/rendering/shaders/quality-level</property>
++            <property>/sim/rendering/shaders/generic</property>
++          </and>
++        </or>
+         <or>
+           <less-equal>
+             <value type="float">2.0</value>
+@@ -1518,6 +1550,10 @@
+         <vertex-shader>Shaders/default.vert</vertex-shader>
+         <fragment-shader>Shaders/default.frag</fragment-shader>
+         <fragment-shader>Shaders/include_fog.frag</fragment-shader>
++        <attribute>
++          <name>overlayTexCoord</name>
++          <index>14</index>
++        </attribute>
+       </program>
+       <uniform>
+         <name>visibility</name>
+@@ -1560,6 +1596,11 @@
+         <value>2</value>
+         <!-- AMBIENT_AND_DIFFUSE -->
+       </uniform>
++      <uniform>
++        <name>overlay</name>
++        <type>sampler-2d</type>
++        <value type="int">15</value>
++      </uniform>
+       <depth>
+         <function>lequal</function>
+     <!--    <write-mask type="bool">false</write-mask> -->
+diff --git a/Effects/terrain-overlay.eff b/Effects/terrain-overlay.eff
+index 9076213b6..e40473520 100644
+--- a/Effects/terrain-overlay.eff
++++ b/Effects/terrain-overlay.eff
+@@ -47,6 +47,10 @@
+     <predicate>
+       <and>
+         <property>/sim/rendering/shaders/skydome</property>
++        <equal>
++          <value type="float">0.0</value>
++          <float-property>/sim/rendering/photoscenery/enabled</float-property>
++        </equal>
+         <and>
+           <less-equal>
+             <value type="float">6.0</value>
+diff --git a/Effects/urban.eff b/Effects/urban.eff
+index c2552047a..08fee2073 100644
+--- a/Effects/urban.eff
++++ b/Effects/urban.eff
+@@ -54,6 +54,10 @@
+ 			<and>
+ 				<property>/sim/rendering/shaders/skydome</property>
+ 				<property>/sim/rendering/shaders/urban</property>
++				<equal>
++					<value type="float">0.0</value>
++					<float-property>/sim/rendering/photoscenery/enabled</float-property>
++				</equal>
+ 				<less-equal>
+ 					<value type="float">4.0</value>
+ 					<float-property>/sim/rendering/shaders/urban</float-property>
+@@ -757,6 +761,10 @@
+ 			<and>
+ 				<property>/sim/rendering/shaders/skydome</property>
+ 				<property>/sim/rendering/shaders/urban</property>
++				<equal>
++					<value type="float">0.0</value>
++					<float-property>/sim/rendering/photoscenery/enabled</float-property>
++				</equal>
+ 				<less-equal>
+ 					<value type="float">1.0</value>
+ 					<float-property>/sim/rendering/shaders/urban</float-property>
+@@ -1416,6 +1424,10 @@
+ 			<and>
+ 				<property>/sim/rendering/rembrandt/enabled</property>
+ 				<property>/sim/rendering/shaders/urban</property>
++				<equal>
++          			<value type="float">0.0</value>
++          			<float-property>/sim/rendering/photoscenery/enabled</float-property>
++				</equal>
+ 				<less-equal>
+ 					<value type="float">4.0</value>
+ 					<float-property>/sim/rendering/shaders/urban</float-property>
+@@ -1622,6 +1634,10 @@
+ 			<and>
+ 				<property>/sim/rendering/rembrandt/enabled</property>
+ 				<property>/sim/rendering/shaders/urban</property>
++				<equal>
++          			<value type="float">0.0</value>
++          			<float-property>/sim/rendering/photoscenery/enabled</float-property>
++        		</equal>
+ 				<less-equal>
+ 					<value type="float">1.0</value>
+ 					<float-property>/sim/rendering/shaders/urban</float-property>
+@@ -1794,6 +1810,10 @@
+ 			<and>
+ 				<property>/sim/rendering/shaders/quality-level</property>
+ 				<property>/sim/rendering/shaders/urban</property>
++				<equal>
++          			<value type="float">0.0</value>
++          			<float-property>/sim/rendering/photoscenery/enabled</float-property>
++				</equal>
+ 				<less-equal>
+ 					<value type="float">4.0</value>
+ 					<float-property>/sim/rendering/shaders/urban</float-property>
+@@ -2059,6 +2079,10 @@
+ 			<and>
+ 				<property>/sim/rendering/shaders/quality-level</property>
+ 				<property>/sim/rendering/shaders/urban</property>
++				<equal>
++          			<value type="float">0.0</value>
++          			<float-property>/sim/rendering/photoscenery/enabled</float-property>
++        		</equal>
+ 				<less-equal>
+ 					<value type="float">1.0</value>
+ 					<float-property>/sim/rendering/shaders/urban</float-property>
+diff --git a/Shaders/default.frag b/Shaders/default.frag
+index 1c3fbaf84..8ee3d6f8d 100644
+--- a/Shaders/default.frag
++++ b/Shaders/default.frag
+@@ -5,8 +5,10 @@
+ 
+ varying vec4 diffuse_term;
+ varying vec3 normal;
++varying vec2 otc;
+ 
+ uniform sampler2D texture;
++uniform sampler2D overlay;
+ 
+ ////fog "include" /////
+ uniform int fogType;
+@@ -50,6 +52,12 @@ void main()
+     // is closer to what the OpenGL fixed function pipeline does.
+     color = clamp(color, 0.0, 1.0);
+     texel = texture2D(texture, gl_TexCoord[0].st);
++
++    vec4 sat_texel = texture2D(overlay, otc);
++    if (sat_texel.r > 0) {
++        texel = sat_texel;
++    }
++    
+     fragColor = color * texel + specular;
+ 
+     fragColor.rgb = fog_Func(fragColor.rgb, fogType);
+diff --git a/Shaders/default.vert b/Shaders/default.vert
+index 1bc240585..77a46c17b 100644
+--- a/Shaders/default.vert
++++ b/Shaders/default.vert
+@@ -12,12 +12,15 @@
+ #define MODE_DIFFUSE 1
+ #define MODE_AMBIENT_AND_DIFFUSE 2
+ 
++attribute vec2 overlayTexCoord;
++
+ // The constant term of the lighting equation that doesn't depend on
+ // the surface normal is passed in gl_{Front,Back}Color. The alpha
+ // component is set to 1 for front, 0 for back in order to work around
+ // bugs with gl_FrontFacing in the fragment shader.
+ varying vec4 diffuse_term;
+ varying vec3 normal;
++varying vec2 otc;
+ 
+ uniform int colorMode;
+ 
+@@ -31,6 +34,7 @@ void main()
+ {
+     gl_Position = ftransform();
+     gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
++    otc = overlayTexCoord;
+     normal = gl_NormalMatrix * gl_Normal;
+     vec4 ambient_color, diffuse_color;
+     if (colorMode == MODE_DIFFUSE) {
+diff --git a/Shaders/generic-ALS-base.vert b/Shaders/generic-ALS-base.vert
+index ecabf9e44..dd87b303c 100644
+--- a/Shaders/generic-ALS-base.vert
++++ b/Shaders/generic-ALS-base.vert
+@@ -15,6 +15,8 @@
+ #define MODE_DIFFUSE 1
+ #define MODE_AMBIENT_AND_DIFFUSE 2
+ 
++attribute vec2 overlayTexCoord;
++
+ // The constant term of the lighting equation that doesn't depend on
+ // the surface normal is passed in gl_{Front,Back}Color. The alpha
+ // component is set to 1 for front, 0 for back in order to work around
+@@ -22,6 +24,7 @@
+ varying vec4 diffuse_term;
+ varying vec3 normal;
+ varying vec3 relPos;
++varying vec2 otc;
+ 
+ varying float yprime_alt;
+ varying float mie_angle;
+@@ -76,6 +79,7 @@ void main()
+     //vec4 ecPosition = gl_ModelViewMatrix * gl_Vertex;
+     gl_Position = ftransform();
+     gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
++    otc = overlayTexCoord;
+     normal = gl_NormalMatrix * gl_Normal;
+     vec4 ambient_color, diffuse_color;
+     if (colorMode == MODE_DIFFUSE) {
+diff --git a/Shaders/terrain-ALS-base.frag b/Shaders/terrain-ALS-base.frag
+index 04eb1e660..0fb9536ff 100644
+--- a/Shaders/terrain-ALS-base.frag
++++ b/Shaders/terrain-ALS-base.frag
+@@ -9,10 +9,12 @@ varying vec3 relPos;
+ 
+ 
+ uniform sampler2D texture;
++uniform sampler2D overlay;
+ 
+ 
+ varying float yprime_alt;
+ varying float mie_angle;
++varying vec2 otc;
+ 
+ 
+ uniform float visibility;
+@@ -82,6 +84,12 @@ void main()
+     // is closer to what the OpenGL fixed function pipeline does.
+     color = clamp(color, 0.0, 1.0);
+     texel = texture2D(texture, gl_TexCoord[0].st);
++
++	vec4 sat_texel = texture2D(overlay, otc);
++    if (sat_texel.r > 0) {
++        texel = sat_texel;
++    }
++
+     fragColor = color * texel + specular;
+ 
+ 
+diff --git a/Shaders/terrain-ALS-detailed.frag b/Shaders/terrain-ALS-detailed.frag
+index e79306ad0..4b726c0a2 100644
+--- a/Shaders/terrain-ALS-detailed.frag
++++ b/Shaders/terrain-ALS-detailed.frag
+@@ -8,12 +8,14 @@ varying vec3 normal;
+ varying vec3 relPos;
+ varying vec2 rawPos;
+ varying vec3 worldPos;
++varying vec2 otc;
+ 
+ 
+ 
+ uniform sampler2D texture;
+ uniform sampler2D detail_texture;
+ uniform sampler2D mix_texture;
++uniform sampler2D overlay;
+ 
+ //varying float yprime_alt;
+ //varying float mie_angle;
+@@ -84,6 +86,7 @@ float ct = dot(vec3(0.0, 0.0, 1.0), relPos)/dist;
+     vec3 halfVector = gl_LightSource[0].halfVector.xyz;
+     //vec3 halfVector = normalize(normalize(lightDir) + normalize(ecViewdir));
+     vec4 texel;
++	vec4 sat_texel;
+     vec4 snow_texel;
+     vec4 detail_texel;
+     vec4 mix_texel;
+@@ -121,16 +124,23 @@ float noise_2000m = Noise3D(worldPos.xyz, 2000.0);
+ 
+ //
+ 
+-
+ // get the texels
++	int flag = 1;
++    int mix_flag = 1;
+ 
+     texel = texture2D(texture, gl_TexCoord[0].st);
+     float local_autumn_factor = texel.a;
+ 
++	sat_texel = texture2D(overlay, otc);
++	if (sat_texel.r > 0) {
++		texel = sat_texel;
++		flag = 0;
++		mix_flag = 0;
++	}
++
+     float distortion_factor = 1.0;
+     vec2 stprime;
+-    int flag = 1;
+-    int mix_flag = 1;
++    
+     float noise_term;
+     float snow_alpha;
+ 
+@@ -155,14 +165,14 @@ float noise_2000m = Noise3D(worldPos.xyz, 2000.0);
+    	
+ 	}
+ 
+-    if (tquality_level > 2)
++    if ((tquality_level > 2) && (mix_flag == 1))
+ 	{
+ 	mix_texel = texture2D(mix_texture, gl_TexCoord[0].st * 1.3);
+ 	if (mix_texel.a <0.1) {mix_flag = 0;}
+  	}
+ 
+ 
+-    if (tquality_level > 3)  
++    if (tquality_level > 3 && (flag == 1))  
+ 	{
+ 	stprime = vec2 (0.86*gl_TexCoord[0].s + 0.5*gl_TexCoord[0].t, 0.5*gl_TexCoord[0].s - 0.86*gl_TexCoord[0].t);
+     	//distortion_factor = 0.9375 + (1.0 * nvL[2]);
+diff --git a/Shaders/terrain-ALS-detailed.vert b/Shaders/terrain-ALS-detailed.vert
+index 660919b35..d90e39ff3 100644
+--- a/Shaders/terrain-ALS-detailed.vert
++++ b/Shaders/terrain-ALS-detailed.vert
+@@ -15,6 +15,8 @@
+ #define MODE_DIFFUSE 1
+ #define MODE_AMBIENT_AND_DIFFUSE 2
+ 
++attribute vec2 overlayTexCoord;
++
+ // The constant term of the lighting equation that doesn't depend on
+ // the surface normal is passed in gl_{Front,Back}Color. The alpha
+ // component is set to 1 for front, 0 for back in order to work around
+@@ -24,6 +26,7 @@ varying vec3 normal;
+ varying vec3 relPos;
+ varying vec2 rawPos;
+ varying vec3 worldPos;
++varying vec2 otc;
+ 
+ 
+ varying float mie_angle;
+@@ -93,6 +96,7 @@ void main()
+     //vec4 ecPosition = gl_ModelViewMatrix * gl_Vertex;
+     gl_Position = ftransform();
+     gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
++    otc = overlayTexCoord;
+     normal = gl_NormalMatrix * gl_Normal;
+     //nvec = (gl_NormalMatrix * gl_Normal).xy;
+     vec4 ambient_color, diffuse_color;
+diff --git a/Shaders/terrain-ALS-ultra.frag b/Shaders/terrain-ALS-ultra.frag
+index 65a52e2bc..37afc85b9 100644
+--- a/Shaders/terrain-ALS-ultra.frag
++++ b/Shaders/terrain-ALS-ultra.frag
+@@ -10,6 +10,7 @@ varying vec2 rawPos;
+ varying vec3 worldPos;
+ varying vec3 ecViewdir;
+ varying vec2 grad_dir;
++varying vec2 otc;
+ 
+ 
+ uniform sampler2D texture;
+@@ -18,6 +19,7 @@ uniform sampler2D mix_texture;
+ uniform sampler2D grain_texture;
+ uniform sampler2D dot_texture;
+ uniform sampler2D gradient_texture;
++uniform sampler2D overlay;
+ 
+ 
+ varying float steepness;
+@@ -129,6 +131,7 @@ float msl_altitude = (relPos.z + eye_alt);
+     vec3 lightDir = gl_LightSource[0].position.xyz;
+     vec3 halfVector = normalize(normalize(lightDir) + normalize(ecViewdir));
+     vec4 texel;
++	vec4 sat_texel;
+     vec4 snow_texel;
+     vec4 detail_texel;
+     vec4 mix_texel;
+@@ -232,6 +235,14 @@ float snownoise_50m = mix(noise_50m, slopenoise_100m, clamp(3.0*(1.0-steepness),
+ 
+     texel = texture2D(texture, gl_TexCoord[0].st);
+     float local_autumn_factor = texel.a;
++
++	sat_texel = texture2D(overlay, otc);
++	if (sat_texel.r > 0) {
++		texel = sat_texel;
++		flag = 0;
++		mix_flag = 0;
++	}
++
+ 	grain_texel = texture2D(grain_texture, gl_TexCoord[0].st * 25.0);
+ 	gradient_texel = texture2D(gradient_texture, gl_TexCoord[0].st * 4.0);
+ 
+@@ -263,18 +274,23 @@ float snownoise_50m = mix(noise_50m, slopenoise_100m, clamp(3.0*(1.0-steepness),
+ 	}
+ 
+ 	// the mixture/gradient texture
+-	mix_texel = texture2D(mix_texture, gl_TexCoord[0].st * 1.3);
+-	if (mix_texel.a <0.1) {mix_flag = 0;}
++	if (mix_flag == 1) {
++		mix_texel = texture2D(mix_texture, gl_TexCoord[0].st * 1.3);
++		if (mix_texel.a <0.1) {mix_flag = 0;}
++	}
+ 
+ 	// the hires overlay texture is loaded with parallax mapping
+ 	
+-	stprime = vec2 (0.86*gl_TexCoord[0].s + 0.5*gl_TexCoord[0].t, 0.5*gl_TexCoord[0].s - 0.86*gl_TexCoord[0].t);
+-	distortion_factor = 0.97 + 0.06 * noise_500m;
+-	stprime = stprime * distortion_factor * 15.0;
+-	stprime = stprime + normalize(relPos).xy * 0.022 * (noise_10m + 0.5 * noise_5m +0.25 * noise_2m - 0.875 );
++	if (flag == 1) {
++		stprime = vec2 (0.86*gl_TexCoord[0].s + 0.5*gl_TexCoord[0].t, 0.5*gl_TexCoord[0].s - 0.86*gl_TexCoord[0].t);
++		distortion_factor = 0.97 + 0.06 * noise_500m;
++		stprime = stprime * distortion_factor * 15.0;
++		stprime = stprime + normalize(relPos).xy * 0.022 * (noise_10m + 0.5 * noise_5m +0.25 * noise_2m - 0.875 );
++		
++		detail_texel = texture2D(detail_texture, stprime);
++		if (detail_texel.a <0.1) {flag = 0;}
++	}
+ 	
+-    	detail_texel = texture2D(detail_texture, stprime);
+-	if (detail_texel.a <0.1) {flag = 0;}
+ 	
+ 
+ 
+diff --git a/Shaders/terrain-ALS-ultra.vert b/Shaders/terrain-ALS-ultra.vert
+index c3dcf9f28..ba094c256 100644
+--- a/Shaders/terrain-ALS-ultra.vert
++++ b/Shaders/terrain-ALS-ultra.vert
+@@ -15,6 +15,8 @@
+ #define MODE_DIFFUSE 1
+ #define MODE_AMBIENT_AND_DIFFUSE 2
+ 
++attribute vec2 overlayTexCoord;
++
+ // The constant term of the lighting equation that doesn't depend on
+ // the surface normal is passed in gl_{Front,Back}Color. The alpha
+ // component is set to 1 for front, 0 for back in order to work around
+@@ -26,6 +28,7 @@ varying vec2 rawPos;
+ varying vec3 worldPos;
+ varying vec3 ecViewdir;
+ varying vec2 grad_dir;
++varying vec2 otc;
+ 
+ varying float mie_angle;
+ varying float steepness;
+@@ -108,6 +111,7 @@ void main()
+     //vec4 ecPosition = gl_ModelViewMatrix * gl_Vertex;
+     //gl_Position = ftransform();
+     gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
++    otc = overlayTexCoord;
+     normal = gl_NormalMatrix * gl_Normal;
+     //nvec = (gl_NormalMatrix * gl_Normal).xy;
+     vec4 ambient_color, diffuse_color;
+diff --git a/defaults.xml b/defaults.xml
+index 2f3f8e439..879d7f6c3 100644
+--- a/defaults.xml
++++ b/defaults.xml
+@@ -132,6 +132,11 @@ Started September 2000 by David Megginson, david@megginson.com
+           </lighting>
+         </debug>
+       </rembrandt>
++      <photoscenery>
++        <enabled type="bool" userarchive="y">true</enabled>
++        <pixels-per-meter type="float" userarchive="y">0.25</pixels-per-meter>
++        <auto-download type="bool" userarchive="y">true</auto-download>
++      </photoscenery>
+       <debug type="bool">false</debug>
+       <realism type="int">5</realism>
+       <filtering type="int">8</filtering>
+diff --git a/latlontotile.py b/latlontotile.py
+new file mode 100644
+index 000000000..19982278d
+--- /dev/null
++++ b/latlontotile.py
+@@ -0,0 +1,42 @@
++import sys
++
++def tileWidth(lat):
++    tiletable=[[0,0.125],[22,0.25],[62,0.5],[76,1],[83,2],[86,4],[88,8],[89,360],[90,360]]
++    for i in range(len(tiletable)):
++        if abs(lat)>=tiletable[i][0] and abs(lat)<tiletable[i+1][0]:
++            return float (tiletable[i][1])
++
++def coordinatesFromTileIndex(tileindex):
++    base_x = (tileindex>>14) - 180
++    base_y = ((tileindex-((base_x+180)<<14)) >>6) - 90
++
++    y = (tileindex-(((base_x+180)<<14)+ ((base_y+90) << 6))) >> 3
++    x = tileindex-(((((base_x+180)<<14)+ ((base_y+90) << 6))) + (y << 3))
++    tilewidth = tileWidth(base_y)
++    return [(base_y + 0.125 * y), base_y + 0.125 * (y+1), base_x + x * tilewidth, base_x + (x+1) *
++            tilewidth, 0.5 * (base_y+0.125*y + base_y + 0.125*(y+1)), 0.5 * (base_x + x * tilewidth + base_x + (x+1) *
++            tilewidth)]
++
++def tileIndexFromCoordinate(lat, lon):
++    import math
++    base_y = math.floor(lat)
++    y = int((lat-base_y)*8)
++    tilewidth = tileWidth(lat)
++    base_x = math.floor(math.floor(lon/tilewidth)*tilewidth)
++    if base_x<-180:
++        base_x=-180
++    x = int(math.floor((lon-base_x)/tilewidth))
++    tileindex = int(((int(math.floor(lon))+180)<<14) + ((int(math.floor(lat))+ 90) << 6) + (y << 3) + x)
++    return tileindex
++
++def main(argv):
++    if len(argv) != 3:
++        print('you silly')
++        exit(1)
++    lat = float(argv[1])
++    lon = float(argv[2])
++    print('Tile number is: ', str(tileIndexFromCoordinate(lat, lon)))
++    print('Tile bounds are: ', str(coordinatesFromTileIndex(tileIndexFromCoordinate(lat, lon))))
++
++if __name__ == "__main__":
++    main(sys.argv)

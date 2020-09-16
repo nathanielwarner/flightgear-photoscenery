@@ -1,4 +1,4 @@
 # FlightGear - PhotoScenery Edition
 
-Work in progress!
+These patches bring support for photoscenery to FlightGear.
 
