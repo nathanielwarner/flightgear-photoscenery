@@ -1,6 +1,6 @@
 # FlightGear - PhotoScenery Edition
 
-These patches bring support for photoscenery to FlightGear, the free and open-source flight simulator.
+This project brings support for photoscenery to FlightGear, the free and open-source flight simulator.
 The photoscenery is an overlay, which overrides the traditional scenery textures when available.
 It is fully compatible with the ALS and default pipelines, and works with your existing scenery.
 
@@ -12,13 +12,9 @@ I plan to release prebuilt binaries for Linux, MacOS, and Windows to coincide wi
 
 ## Building from source
 
-1. Clone this repository with submodules. (`git clone --recurse-submodules https://github.com/nathanielwarner/flightgear-photoscenery`)
-2. Apply the patches for simgear and fgdata. (provided as `simgear.patch` and `fgdata.patch` respectively)
-3. Follow the build and install instructions provided in simgear. You may want to change the install prefix so as not to overwrite another installation of simgear.
-4. Follow the build instructions provided in flightgear.
-
-SimGear, as well as the FlightGear base data package (fgdata), need to be patched.
-These patches are provided here as `simgear.patch` and `fgdata.patch`.
+1. Acquire my patched [FlightGear Base Data Package](https://drive.google.com/file/d/1EpoZ_q4DWyztCyWyN7MqkekrN28QzTKi/view?usp=sharing). (This is too large to be put on GitHub.) Extract it somewhere.
+2. Clone my patched [SimGear repository](https://github.com/nathanielwarner/simgear), and follow the normal install instructions. You may want to set the install prefix so as not to conflict with an existing installation of simgear.
+3. Clone the normal FlightGear repository, at the release/2020.2 branch. (`git clone -b release/2020.2 https://git.code.sf.net/p/flightgear/flightgear`). Follow the normal build instructions, making sure that the base data package and simgear location is set to the patched ones you downloaded.
 
 ## Screenshots
 
@@ -31,4 +27,3 @@ KSBA area, with photoscenery:
 Same location, with traditional scenery:
 
 ![KSBA traditional scenery](screenshots/ksba-traditional.png)
-
