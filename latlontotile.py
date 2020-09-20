@@ -1,3 +1,6 @@
+# This script is from "Photoscenery for Realistic Scene Generation and Visualization in Flightgear: A Tutorial"
+# by Srikanth A, Indhu B, L Krishnamurthy, VPS Naidu
+
 import sys
 
 def tileWidth(lat):
