@@ -48,6 +48,21 @@ index 5e7d265fa..6eabab455 100644
          <or>
            <less-equal>
              <value type="float">2.0</value>
+diff --git a/Effects/forest.eff b/Effects/forest.eff
+index 1405c9eca..1c47fc6be 100644
+--- a/Effects/forest.eff
++++ b/Effects/forest.eff
+@@ -79,6 +79,10 @@
+ 			<value type="float">0.0</value>
+ 			<float-property>/sim/rendering/rembrandt/enabled</float-property>
+ 		</equal>
++    <equal>
++			<value type="float">0.0</value>
++			<float-property>/sim/rendering/photoscenery/enabled</float-property>
++		</equal>
+         <or>
+           <less-equal>
+             <value type="float">2.0</value>
 diff --git a/Effects/landmass.eff b/Effects/landmass.eff
 index 3198ff71f..aea9858e7 100644
 --- a/Effects/landmass.eff
@@ -75,7 +90,7 @@ index 3198ff71f..aea9858e7 100644
  					<less-equal>
  						<value type="float">2.0</value>
 diff --git a/Effects/terrain-default.eff b/Effects/terrain-default.eff
-index d88718fb1..0340e88bc 100644
+index d88718fb1..874d9ba94 100644
 --- a/Effects/terrain-default.eff
 +++ b/Effects/terrain-default.eff
 @@ -320,6 +320,10 @@
@@ -83,7 +98,7 @@ index d88718fb1..0340e88bc 100644
          <fragment-shader>Shaders/secondary_lights.frag</fragment-shader>
          <fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
 +        <attribute>
-+          <name>overlayTexCoord</name>
++          <name>orthophotoTexCoord</name>
 +          <index>14</index>
 +        </attribute>
        </program>
@@ -94,7 +109,7 @@ index d88718fb1..0340e88bc 100644
          <!-- AMBIENT_AND_DIFFUSE -->
        </uniform>
 +      <uniform>
-+        <name>overlay</name>
++        <name>orthophotoTexture</name>
 +        <type>sampler-2d</type>
 +        <value type="int">15</value>
 +      </uniform>
@@ -106,7 +121,7 @@ index d88718fb1..0340e88bc 100644
          <fragment-shader>Shaders/hazes.frag</fragment-shader>
          <fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
 +        <attribute>
-+          <name>overlayTexCoord</name>
++          <name>orthophotoTexCoord</name>
 +          <index>14</index>
 +        </attribute>
        </program>
@@ -117,7 +132,7 @@ index d88718fb1..0340e88bc 100644
          <!-- AMBIENT_AND_DIFFUSE -->
        </uniform>
 +      <uniform>
-+        <name>overlay</name>
++        <name>orthophotoTexture</name>
 +        <type>sampler-2d</type>
 +        <value type="int">15</value>
 +      </uniform>
@@ -133,7 +148,7 @@ index d88718fb1..0340e88bc 100644
 +	      <fragment-shader>Shaders/noise.frag</fragment-shader>
 +	      <fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
 +        <attribute>
-+          <name>overlayTexCoord</name>
++          <name>orthophotoTexCoord</name>
 +          <index>14</index>
 +        </attribute>
        </program>
@@ -144,7 +159,7 @@ index d88718fb1..0340e88bc 100644
          <!-- AMBIENT_AND_DIFFUSE -->
        </uniform>
 +      <uniform>
-+        <name>overlay</name>
++        <name>orthophotoTexture</name>
 +        <type>sampler-2d</type>
 +        <value type="int">15</value>
 +      </uniform>
@@ -172,7 +187,7 @@ index d88718fb1..0340e88bc 100644
          <fragment-shader>Shaders/default.frag</fragment-shader>
          <fragment-shader>Shaders/include_fog.frag</fragment-shader>
 +        <attribute>
-+          <name>overlayTexCoord</name>
++          <name>orthophotoTexCoord</name>
 +          <index>14</index>
 +        </attribute>
        </program>
@@ -183,28 +198,13 @@ index d88718fb1..0340e88bc 100644
          <!-- AMBIENT_AND_DIFFUSE -->
        </uniform>
 +      <uniform>
-+        <name>overlay</name>
++        <name>orthophotoTexture</name>
 +        <type>sampler-2d</type>
 +        <value type="int">15</value>
 +      </uniform>
        <depth>
          <function>lequal</function>
      <!--    <write-mask type="bool">false</write-mask> -->
-diff --git a/Effects/terrain-overlay.eff b/Effects/terrain-overlay.eff
-index 9076213b6..e40473520 100644
---- a/Effects/terrain-overlay.eff
-+++ b/Effects/terrain-overlay.eff
-@@ -47,6 +47,10 @@
-     <predicate>
-       <and>
-         <property>/sim/rendering/shaders/skydome</property>
-+        <equal>
-+          <value type="float">0.0</value>
-+          <float-property>/sim/rendering/photoscenery/enabled</float-property>
-+        </equal>
-         <and>
-           <less-equal>
-             <value type="float">6.0</value>
 diff --git a/Effects/urban.eff b/Effects/urban.eff
 index c2552047a..08fee2073 100644
 --- a/Effects/urban.eff
@@ -275,65 +275,51 @@ index c2552047a..08fee2073 100644
  				<less-equal>
  					<value type="float">1.0</value>
  					<float-property>/sim/rendering/shaders/urban</float-property>
-diff --git a/Nasal/emesary.nas b/Nasal/emesary.nas
-index a6ca871c7..0c2434a16 100644
---- a/Nasal/emesary.nas
-+++ b/Nasal/emesary.nas
-@@ -303,7 +303,7 @@ var TypeIdUnspecified = 1;
- var NotificationAutoTypeId = 1;
- var Notification =
- {
--    new: func(_type, _ident, _typeid=0)
-+    new: func(_type, _ident, _typeid=-1)
-     {
-         if (!isscalar(_type)) {
-             logprint(DEV_ALERT, "Notification.new: _type must be a scalar!");
-@@ -691,7 +691,7 @@ var genericEmesaryGlobalTransmitterTransmit  = func(node)
-     transmitter.NotifyAll(message);
- };
- 
--removecommand("emesary-transmit"); #in case of reload
-+#removecommand("emesary-transmit"); #in case of reload
- addcommand("emesary-transmit", genericEmesaryGlobalTransmitterTransmit);
- 
- #setprop("/sim/startup/terminal-ansi-colors",0);
 diff --git a/Shaders/default.frag b/Shaders/default.frag
-index 1c3fbaf84..8ee3d6f8d 100644
+index 1c3fbaf84..f7396fa5c 100644
 --- a/Shaders/default.frag
 +++ b/Shaders/default.frag
-@@ -5,8 +5,10 @@
+@@ -5,12 +5,16 @@
  
  varying vec4 diffuse_term;
  varying vec3 normal;
-+varying vec2 otc;
++varying vec2 orthoTexCoord;
  
  uniform sampler2D texture;
-+uniform sampler2D overlay;
++uniform sampler2D orthophotoTexture;
  
  ////fog "include" /////
  uniform int fogType;
-@@ -50,6 +52,12 @@ void main()
+ 
++uniform bool orthophotoAvailable;
++
+ vec3 fog_Func(vec3 color, int type);
+ //////////////////////
+ 
+@@ -50,6 +54,14 @@ void main()
      // is closer to what the OpenGL fixed function pipeline does.
      color = clamp(color, 0.0, 1.0);
      texel = texture2D(texture, gl_TexCoord[0].st);
 +
-+    vec4 sat_texel = texture2D(overlay, otc);
-+    if (sat_texel.r > 0) {
-+        texel = sat_texel;
++    if (orthophotoAvailable) {
++        vec4 sat_texel = texture2D(orthophotoTexture, orthoTexCoord);
++        if (sat_texel.a > 0) {
++            texel.rgb = sat_texel.rgb;
++        }
 +    }
-+    
++
      fragColor = color * texel + specular;
  
      fragColor.rgb = fog_Func(fragColor.rgb, fogType);
 diff --git a/Shaders/default.vert b/Shaders/default.vert
-index 1bc240585..77a46c17b 100644
+index 1bc240585..3d20d2bd1 100644
 --- a/Shaders/default.vert
 +++ b/Shaders/default.vert
 @@ -12,12 +12,15 @@
  #define MODE_DIFFUSE 1
  #define MODE_AMBIENT_AND_DIFFUSE 2
  
-+attribute vec2 overlayTexCoord;
++attribute vec2 orthophotoTexCoord;
 +
  // The constant term of the lighting equation that doesn't depend on
  // the surface normal is passed in gl_{Front,Back}Color. The alpha
@@ -341,7 +327,7 @@ index 1bc240585..77a46c17b 100644
  // bugs with gl_FrontFacing in the fragment shader.
  varying vec4 diffuse_term;
  varying vec3 normal;
-+varying vec2 otc;
++varying vec2 orthoTexCoord;
  
  uniform int colorMode;
  
@@ -349,19 +335,19 @@ index 1bc240585..77a46c17b 100644
  {
      gl_Position = ftransform();
      gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-+    otc = overlayTexCoord;
++    orthoTexCoord = orthophotoTexCoord;
      normal = gl_NormalMatrix * gl_Normal;
      vec4 ambient_color, diffuse_color;
      if (colorMode == MODE_DIFFUSE) {
 diff --git a/Shaders/generic-ALS-base.vert b/Shaders/generic-ALS-base.vert
-index ecabf9e44..dd87b303c 100644
+index ecabf9e44..77f3d74b8 100644
 --- a/Shaders/generic-ALS-base.vert
 +++ b/Shaders/generic-ALS-base.vert
 @@ -15,6 +15,8 @@
  #define MODE_DIFFUSE 1
  #define MODE_AMBIENT_AND_DIFFUSE 2
  
-+attribute vec2 overlayTexCoord;
++attribute vec2 orthophotoTexCoord;
 +
  // The constant term of the lighting equation that doesn't depend on
  // the surface normal is passed in gl_{Front,Back}Color. The alpha
@@ -370,7 +356,7 @@ index ecabf9e44..dd87b303c 100644
  varying vec4 diffuse_term;
  varying vec3 normal;
  varying vec3 relPos;
-+varying vec2 otc;
++varying vec2 orthoTexCoord;
  
  varying float yprime_alt;
  varying float mie_angle;
@@ -378,68 +364,80 @@ index ecabf9e44..dd87b303c 100644
      //vec4 ecPosition = gl_ModelViewMatrix * gl_Vertex;
      gl_Position = ftransform();
      gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-+    otc = overlayTexCoord;
++    orthoTexCoord = orthophotoTexCoord;
      normal = gl_NormalMatrix * gl_Normal;
      vec4 ambient_color, diffuse_color;
      if (colorMode == MODE_DIFFUSE) {
 diff --git a/Shaders/terrain-ALS-base.frag b/Shaders/terrain-ALS-base.frag
-index 04eb1e660..0fb9536ff 100644
+index 04eb1e660..526fd813e 100644
 --- a/Shaders/terrain-ALS-base.frag
 +++ b/Shaders/terrain-ALS-base.frag
 @@ -9,10 +9,12 @@ varying vec3 relPos;
  
  
  uniform sampler2D texture;
-+uniform sampler2D overlay;
++uniform sampler2D orthophotoTexture;
  
  
  varying float yprime_alt;
  varying float mie_angle;
-+varying vec2 otc;
++varying vec2 orthoTexCoord;
  
  
  uniform float visibility;
-@@ -82,6 +84,12 @@ void main()
+@@ -25,6 +27,8 @@ uniform float overcast;
+ uniform float eye_alt;
+ uniform float cloud_self_shading;
+ 
++uniform bool orthophotoAvailable;
++
+ const float EarthRadius = 5800000.0;
+ const float terminator_width = 200000.0;
+ 
+@@ -82,6 +86,14 @@ void main()
      // is closer to what the OpenGL fixed function pipeline does.
      color = clamp(color, 0.0, 1.0);
      texel = texture2D(texture, gl_TexCoord[0].st);
 +
-+	vec4 sat_texel = texture2D(overlay, otc);
-+    if (sat_texel.r > 0) {
-+        texel = sat_texel;
++	if (orthophotoAvailable) {
++        vec4 sat_texel = texture2D(orthophotoTexture, orthoTexCoord);
++        if (sat_texel.a > 0) {
++            texel.rgb = sat_texel.rgb;
++        }
 +    }
 +
      fragColor = color * texel + specular;
  
  
 diff --git a/Shaders/terrain-ALS-detailed.frag b/Shaders/terrain-ALS-detailed.frag
-index e79306ad0..4b726c0a2 100644
+index e79306ad0..3433520d0 100644
 --- a/Shaders/terrain-ALS-detailed.frag
 +++ b/Shaders/terrain-ALS-detailed.frag
 @@ -8,12 +8,14 @@ varying vec3 normal;
  varying vec3 relPos;
  varying vec2 rawPos;
  varying vec3 worldPos;
-+varying vec2 otc;
++varying vec2 orthoTexCoord;
  
  
  
  uniform sampler2D texture;
  uniform sampler2D detail_texture;
  uniform sampler2D mix_texture;
-+uniform sampler2D overlay;
++uniform sampler2D orthophotoTexture;
  
  //varying float yprime_alt;
  //varying float mie_angle;
-@@ -84,6 +86,7 @@ float ct = dot(vec3(0.0, 0.0, 1.0), relPos)/dist;
-     vec3 halfVector = gl_LightSource[0].halfVector.xyz;
-     //vec3 halfVector = normalize(normalize(lightDir) + normalize(ecViewdir));
-     vec4 texel;
-+	vec4 sat_texel;
-     vec4 snow_texel;
-     vec4 detail_texel;
-     vec4 mix_texel;
-@@ -121,16 +124,23 @@ float noise_2000m = Noise3D(worldPos.xyz, 2000.0);
+@@ -41,6 +43,8 @@ uniform float hires_overlay_bias;
+ uniform int quality_level;
+ uniform int tquality_level;
+ 
++uniform bool orthophotoAvailable;
++
+ const float EarthRadius = 5800000.0;
+ const float terminator_width = 200000.0;
+ 
+@@ -121,16 +125,25 @@ float noise_2000m = Noise3D(worldPos.xyz, 2000.0);
  
  //
  
@@ -451,12 +449,14 @@ index e79306ad0..4b726c0a2 100644
      texel = texture2D(texture, gl_TexCoord[0].st);
      float local_autumn_factor = texel.a;
  
-+	sat_texel = texture2D(overlay, otc);
-+	if (sat_texel.r > 0) {
-+		texel = sat_texel;
-+		flag = 0;
-+		mix_flag = 0;
-+	}
++	if (orthophotoAvailable) {
++        vec4 sat_texel = texture2D(orthophotoTexture, orthoTexCoord);
++        if (sat_texel.a > 0) {
++            texel.rgb = sat_texel.rgb;
++			flag = 0;
++			mix_flag = 0;
++        }
++    }
 +
      float distortion_factor = 1.0;
      vec2 stprime;
@@ -466,7 +466,7 @@ index e79306ad0..4b726c0a2 100644
      float noise_term;
      float snow_alpha;
  
-@@ -155,14 +165,14 @@ float noise_2000m = Noise3D(worldPos.xyz, 2000.0);
+@@ -155,14 +168,14 @@ float noise_2000m = Noise3D(worldPos.xyz, 2000.0);
     	
  	}
  
@@ -484,14 +484,14 @@ index e79306ad0..4b726c0a2 100644
  	stprime = vec2 (0.86*gl_TexCoord[0].s + 0.5*gl_TexCoord[0].t, 0.5*gl_TexCoord[0].s - 0.86*gl_TexCoord[0].t);
      	//distortion_factor = 0.9375 + (1.0 * nvL[2]);
 diff --git a/Shaders/terrain-ALS-detailed.vert b/Shaders/terrain-ALS-detailed.vert
-index 660919b35..d90e39ff3 100644
+index 660919b35..24ed865dd 100644
 --- a/Shaders/terrain-ALS-detailed.vert
 +++ b/Shaders/terrain-ALS-detailed.vert
 @@ -15,6 +15,8 @@
  #define MODE_DIFFUSE 1
  #define MODE_AMBIENT_AND_DIFFUSE 2
  
-+attribute vec2 overlayTexCoord;
++attribute vec2 orthophotoTexCoord;
 +
  // The constant term of the lighting equation that doesn't depend on
  // the surface normal is passed in gl_{Front,Back}Color. The alpha
@@ -500,7 +500,7 @@ index 660919b35..d90e39ff3 100644
  varying vec3 relPos;
  varying vec2 rawPos;
  varying vec3 worldPos;
-+varying vec2 otc;
++varying vec2 orthoTexCoord;
  
  
  varying float mie_angle;
@@ -508,19 +508,19 @@ index 660919b35..d90e39ff3 100644
      //vec4 ecPosition = gl_ModelViewMatrix * gl_Vertex;
      gl_Position = ftransform();
      gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-+    otc = overlayTexCoord;
++    orthoTexCoord = orthophotoTexCoord;
      normal = gl_NormalMatrix * gl_Normal;
      //nvec = (gl_NormalMatrix * gl_Normal).xy;
      vec4 ambient_color, diffuse_color;
 diff --git a/Shaders/terrain-ALS-ultra.frag b/Shaders/terrain-ALS-ultra.frag
-index 65a52e2bc..37afc85b9 100644
+index 65a52e2bc..8a511e55f 100644
 --- a/Shaders/terrain-ALS-ultra.frag
 +++ b/Shaders/terrain-ALS-ultra.frag
 @@ -10,6 +10,7 @@ varying vec2 rawPos;
  varying vec3 worldPos;
  varying vec3 ecViewdir;
  varying vec2 grad_dir;
-+varying vec2 otc;
++varying vec2 orthoTexCoord;
  
  
  uniform sampler2D texture;
@@ -528,34 +528,37 @@ index 65a52e2bc..37afc85b9 100644
  uniform sampler2D grain_texture;
  uniform sampler2D dot_texture;
  uniform sampler2D gradient_texture;
-+uniform sampler2D overlay;
++uniform sampler2D orthophotoTexture;
  
  
  varying float steepness;
-@@ -129,6 +131,7 @@ float msl_altitude = (relPos.z + eye_alt);
-     vec3 lightDir = gl_LightSource[0].position.xyz;
-     vec3 halfVector = normalize(normalize(lightDir) + normalize(ecViewdir));
-     vec4 texel;
-+	vec4 sat_texel;
-     vec4 snow_texel;
-     vec4 detail_texel;
-     vec4 mix_texel;
-@@ -232,6 +235,14 @@ float snownoise_50m = mix(noise_50m, slopenoise_100m, clamp(3.0*(1.0-steepness),
+@@ -62,6 +64,8 @@ uniform int use_searchlight;
+ uniform int use_landing_light;
+ uniform int use_alt_landing_light;
+ 
++uniform bool orthophotoAvailable;
++
+ const float EarthRadius = 5800000.0;
+ const float terminator_width = 200000.0;
+ 
+@@ -232,6 +236,16 @@ float snownoise_50m = mix(noise_50m, slopenoise_100m, clamp(3.0*(1.0-steepness),
  
      texel = texture2D(texture, gl_TexCoord[0].st);
      float local_autumn_factor = texel.a;
 +
-+	sat_texel = texture2D(overlay, otc);
-+	if (sat_texel.r > 0) {
-+		texel = sat_texel;
-+		flag = 0;
-+		mix_flag = 0;
-+	}
++	if (orthophotoAvailable) {
++        vec4 sat_texel = texture2D(orthophotoTexture, orthoTexCoord);
++        if (sat_texel.a > 0) {
++            texel.rgb = sat_texel.rgb;
++			flag = 0;
++			mix_flag = 0;
++        }
++    }
 +
  	grain_texel = texture2D(grain_texture, gl_TexCoord[0].st * 25.0);
  	gradient_texel = texture2D(gradient_texture, gl_TexCoord[0].st * 4.0);
  
-@@ -263,18 +274,23 @@ float snownoise_50m = mix(noise_50m, slopenoise_100m, clamp(3.0*(1.0-steepness),
+@@ -263,18 +277,23 @@ float snownoise_50m = mix(noise_50m, slopenoise_100m, clamp(3.0*(1.0-steepness),
  	}
  
  	// the mixture/gradient texture
@@ -588,14 +591,14 @@ index 65a52e2bc..37afc85b9 100644
  
  
 diff --git a/Shaders/terrain-ALS-ultra.vert b/Shaders/terrain-ALS-ultra.vert
-index c3dcf9f28..ba094c256 100644
+index c3dcf9f28..8de433328 100644
 --- a/Shaders/terrain-ALS-ultra.vert
 +++ b/Shaders/terrain-ALS-ultra.vert
 @@ -15,6 +15,8 @@
  #define MODE_DIFFUSE 1
  #define MODE_AMBIENT_AND_DIFFUSE 2
  
-+attribute vec2 overlayTexCoord;
++attribute vec2 orthophotoTexCoord;
 +
  // The constant term of the lighting equation that doesn't depend on
  // the surface normal is passed in gl_{Front,Back}Color. The alpha
@@ -604,7 +607,7 @@ index c3dcf9f28..ba094c256 100644
  varying vec3 worldPos;
  varying vec3 ecViewdir;
  varying vec2 grad_dir;
-+varying vec2 otc;
++varying vec2 orthoTexCoord;
  
  varying float mie_angle;
  varying float steepness;
@@ -612,10 +615,2699 @@ index c3dcf9f28..ba094c256 100644
      //vec4 ecPosition = gl_ModelViewMatrix * gl_Vertex;
      //gl_Position = ftransform();
      gl_TexCoord[0] = gl_TextureMatrix[0] * gl_MultiTexCoord0;
-+    otc = overlayTexCoord;
++    orthoTexCoord = orthophotoTexCoord;
      normal = gl_NormalMatrix * gl_Normal;
      //nvec = (gl_NormalMatrix * gl_Normal).xy;
      vec4 ambient_color, diffuse_color;
+diff --git a/Textures/buildings.png b/Textures/buildings.png
+index 3aecb4d5d..ce9a61a5d 100644
+Binary files a/Textures/buildings.png and b/Textures/buildings.png differ
+diff --git a/Translations/sk/FlightGear-Qt.xlf b/Translations/sk/FlightGear-Qt.xlf
+index 64d422793..9488bb5da 100644
+--- a/Translations/sk/FlightGear-Qt.xlf
++++ b/Translations/sk/FlightGear-Qt.xlf
+@@ -7,8 +7,8 @@
+         <target xml:space="preserve" state="needs-review-translation">Inštalácia scenérie</target>
+       </trans-unit>
+       <trans-unit id="_msg2">
+-        <source xml:space="preserve">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The easiest way to automatically install scenery is to use TerraSync. If you prefer to download and install scenery manually, you can use this dialog to extract and install the files in the correct place. (&lt;a href=&quot;http://ns334561.ip-5-196-65.eu/~fgscenery/WS2.0/scenery-2.0.1.html&quot;&gt;&lt;span style=&quot; text-decoration: underline; color:#0000ff;&quot;&gt;Click here to download scenery&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;p&gt;Files will be extracted and installed to a &apos;Scenery&apos; folder inside your chosen downloads location (currently %1), after which you can delete the archives if you wish.&lt;/p&gt;&lt;p&gt;To begin, click &apos;Next&apos; and select one or more downloaded scenery archives, which have names such as &apos;w010n40.tar.gz&apos;&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">&lt;html&gt;&lt;head/&gt;&lt;body&gt;&lt;p&gt;The easiest way to automatically install scenery is to use TerraSync. If you prefer to download and install scenery manually, you can use this dialog to extract and install the files in the correct place. (&lt;a href="http://ns334561.ip-5-196-65.eu/~fgscenery/WS2.0/scenery-2.0.1.html"&gt;&lt;span style=" text-decoration: underline; color:#0000ff;"&gt;Click here to download scenery&lt;/span&gt;&lt;/a&gt;)&lt;/p&gt;&lt;p&gt;Files will be extracted and installed to a 'Scenery' folder inside your chosen downloads location (currently %1), after which you can delete the archives if you wish.&lt;/p&gt;&lt;p&gt;To begin, click 'Next' and select one or more downloaded scenery archives, which have names such as 'w010n40.tar.gz'&lt;/p&gt;&lt;/body&gt;&lt;/html&gt;</source>
++        <target xml:space="preserve"/>
+       </trans-unit>
+       <trans-unit id="_msg3">
+         <source xml:space="preserve">Please wait, verifying and extracting scenery...</source>
+@@ -16,10 +16,10 @@
+       </trans-unit>
+       <trans-unit id="_msg4">
+         <source xml:space="preserve">TextLabel</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+       </trans-unit>
+       <trans-unit id="_msg5">
+-        <source xml:space="preserve">Successfully installed the scenery files to &apos;%1&apos;. This location will be added to the list of additional sceneries to be used.</source>
++        <source xml:space="preserve">Successfully installed the scenery files to '%1'. This location will be added to the list of additional sceneries to be used.</source>
+         <target xml:space="preserve" state="needs-review-translation">Súbory scenérie boli úspešne nainštalované do „%1“. Toto umiestnenie bude pridané do zoznamu dodatočných scenérií, ktoré sa majú použiť.</target>
+       </trans-unit>
+     </group>
+@@ -51,18 +51,18 @@
+         <context-group purpose="location"><context context-type="linenumber">77</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg10">
+-        <source xml:space="preserve">Failed to find a hangar description at the URL: &apos;%1&apos;. Check you entered the URL correctly.</source>
++        <source xml:space="preserve">Failed to find a hangar description at the URL: '%1'. Check you entered the URL correctly.</source>
+         <target xml:space="preserve" state="needs-review-translation">Zlyhalo nájdenie popisu hangára na URL: „%1“. Skontrolujte, či je URL zadaná správne.</target>
+         <context-group purpose="location"><context context-type="linenumber">129</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg11">
+         <source xml:space="preserve">Access to the hangar data was forbidden by the server. Please check the URL you entered, or contact the hangar authors.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Prístup k údajom hangáru bol zakázaný serverom. Prosím, skontrolujte zadanú URL, alebo kontaktujte autorov hangáru.</target>
+         <context-group purpose="location"><context context-type="linenumber">132</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg12">
+         <source xml:space="preserve">Failed to download from the server due to a network problem. Check your Internet connection is working, and that you entered the correct URL.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Preberanie zo serveru zlyhalo kvôli sieťovému problému. Skontrolujte, či vaše pripojenie k Internetu funguje, a či ste zadali správnu URL.</target>
+         <context-group purpose="location"><context context-type="linenumber">135</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg13">
+@@ -125,7 +125,7 @@
+         <context-group purpose="location"><context context-type="linenumber">107</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg24">
+-        <source xml:space="preserve">Remove the aircraft folder: &apos;%1&apos; from the list? (The folder contents will not be changed)</source>
++        <source xml:space="preserve">Remove the aircraft folder: '%1' from the list? (The folder contents will not be changed)</source>
+         <target xml:space="preserve" state="needs-review-translation">Odstrániť priečinok lietadla: „%1“ zo zoznamu? (Obsah priečinku nebude zmenený)</target>
+         <context-group purpose="location"><context context-type="linenumber">130</context></context-group>
+       </trans-unit>
+@@ -145,7 +145,7 @@
+         <context-group purpose="location"><context context-type="linenumber">158</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg28">
+-        <source xml:space="preserve">Remove the add-on module folder: &apos;%1&apos; from the list? (The folder contents will not be changed)</source>
++        <source xml:space="preserve">Remove the add-on module folder: '%1' from the list? (The folder contents will not be changed)</source>
+         <target xml:space="preserve" state="needs-review-translation">Odstrániť priečinok doplnkového modulu: „%1“ zo zoznamu? (Obsah priečinku nebude zmenený)</target>
+         <context-group purpose="location"><context context-type="linenumber">186</context></context-group>
+       </trans-unit>
+@@ -165,7 +165,7 @@
+         <context-group purpose="location"><context context-type="linenumber">229</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg32">
+-        <source xml:space="preserve">Remove the scenery folder: &apos;%1&apos; from the list? (The folder contents will not be changed)</source>
++        <source xml:space="preserve">Remove the scenery folder: '%1' from the list? (The folder contents will not be changed)</source>
+         <target xml:space="preserve" state="needs-review-translation">Odstrániť priečinok scenérie: „%1“ zo zoznamu? (Obsah priečinku nebude zmenený)</target>
+         <context-group purpose="location"><context context-type="linenumber">254</context></context-group>
+       </trans-unit>
+@@ -180,8 +180,8 @@
+         <context-group purpose="location"><context context-type="linenumber">274</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg35">
+-        <source xml:space="preserve">If you have downloaded scenery manually from the official FlightGear website, you can use this button to extract and install it into a suitable folder. (Scenery downloaded this way should have a file name such as &apos;w40n020.tar.gz&apos;)</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">If you have downloaded scenery manually from the official FlightGear website, you can use this button to extract and install it into a suitable folder. (Scenery downloaded this way should have a file name such as 'w40n020.tar.gz')</source>
++        <target xml:space="preserve" state="translated">Ak ste prevzali scenériu ručne z oficiálnej webovej stránky simulátora FlightGear, môžete použiť toto tlačidlo na jej rozbalenie a inštaláciu do vhodného priečinku. (Scenéria prevzatá týmto spôsobom by mala mať súbor s názvom v tvare „w40n020.tar.gz“)</target>
+         <context-group purpose="location"><context context-type="linenumber">297</context></context-group>
+       </trans-unit>
+     </group>
+@@ -195,7 +195,7 @@
+       </trans-unit>
+       <trans-unit id="_msg37">
+         <source xml:space="preserve"> (disabled due to incompatible FG version)</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated"> (zakázané kvôli nekompatibilnej verzii simulátoru FG)</target>
+         <context-group purpose="location"><context context-type="linenumber">18</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg38">
+@@ -219,42 +219,42 @@
+       </trans-unit>
+       <trans-unit id="_msg41">
+         <source xml:space="preserve">Module</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Modul</target>
+         <context-group purpose="location"><context context-type="linenumber">53</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg42">
+         <source xml:space="preserve">Description</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Popis</target>
+         <context-group purpose="location"><context context-type="linenumber">72</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg43">
+         <source xml:space="preserve">Id</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Identifikátor</target>
+         <context-group purpose="location"><context context-type="linenumber">80</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg44">
+         <source xml:space="preserve">Version</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Verzia</target>
+         <context-group purpose="location"><context context-type="linenumber">88</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg45">
+         <source xml:space="preserve">Minimum FlightGear version</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Minimálna verzia simulátoru FlightGear</target>
+         <context-group purpose="location"><context context-type="linenumber">96</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg46">
+         <source xml:space="preserve">Maximum FlightGear version</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Maximálna verzia simulátoru FlightGear</target>
+         <context-group purpose="location"><context context-type="linenumber">104</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg47">
+         <source xml:space="preserve">Authors</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Autori</target>
+         <context-group purpose="location"><context context-type="linenumber">112</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg48">
+         <source xml:space="preserve">Maintainers</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Správcovia</target>
+         <context-group purpose="location"><context context-type="linenumber">121</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg49">
+@@ -274,7 +274,7 @@
+       </trans-unit>
+       <trans-unit id="_msg52">
+         <source xml:space="preserve">Local file location</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Umiestnenie miestneho súboru</target>
+         <context-group purpose="location"><context context-type="linenumber">159</context></context-group>
+       </trans-unit>
+     </group>
+@@ -481,7 +481,7 @@ Miestna cesta: %2</target>
+     <group restype="x-trolltech-linguist-context" resname="CatalogDelegate">
+       <trans-unit id="_msg86">
+         <source xml:space="preserve">This hangar is currently disabled due to a problem. Click here to try updating the hangar information from the server. (An Internet connection is required for this)</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Tento hangár je momentálne zakázaný kvôli problému. Kliknutím sem skúsite aktualizovať informácie o hangáre zo serveru. (Pre túto operáciu sa vyžaduje pripojenie k Internetu)</target>
+         <context-group purpose="location"><context context-type="linenumber">87</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg87">
+@@ -580,7 +580,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg104">
+         <source xml:space="preserve">Enter a date and time to begin the flight at. By default this is in local time for the chosen starting location - use the option below to request a time in GMT / UTC.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Zadajte dátum a čas zahájenia letu. Obvykle je to miestny čas podľa zvoleného počiatočného umiestnenia - použitím nasledovnej voľby vyžiadate čas GMT / UTC.</target>
+         <context-group purpose="location"><context context-type="linenumber">68</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg105">
+@@ -595,7 +595,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg107">
+         <source xml:space="preserve">Select if normal (summer) or winter textures are used for the scenery. This does not affect other aspects of the simulation at present, such as icing or weather simulation</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">84</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg108">
+@@ -620,7 +620,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg112">
+         <source xml:space="preserve">Detailed weather simulation based on local terrain and atmospheric simulation. Note that using advanced weather with real-world weather data (METAR) information may not show exactly the conditions recorded, and is not recommended for multi-player flight since the weather simulation is not shared over the network.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">122</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg113">
+@@ -630,7 +630,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg114">
+         <source xml:space="preserve">Download real-world weather from the NOAA servers based on location.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">133</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg115">
+@@ -644,12 +644,12 @@ Miestna cesta: %2</target>
+         <context-group purpose="location"><context context-type="linenumber">161</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg117">
+-        <source xml:space="preserve">Enter a custom METAR string, e.g: &apos;%1&apos;</source>
++        <source xml:space="preserve">Enter a custom METAR string, e.g: '%1'</source>
+         <target xml:space="preserve" state="needs-review-translation">Zadajte vlastný reťazec vo formáte METAR, napr.: „%1“</target>
+         <context-group purpose="location"><context context-type="linenumber">165</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg118">
+-        <source xml:space="preserve">The entered METAR string doesn&apos;t seem to be valid.</source>
++        <source xml:space="preserve">The entered METAR string doesn't seem to be valid.</source>
+         <target xml:space="preserve" state="needs-review-translation">Zdá sa, že zadaný reťazec vo formáte METAR nie je platný.</target>
+         <context-group purpose="location"><context context-type="linenumber">166</context></context-group>
+       </trans-unit>
+@@ -779,18 +779,18 @@ Miestna cesta: %2</target>
+         <context-group purpose="location"><context context-type="linenumber">227</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg143">
+-        <source xml:space="preserve">The flight-plan departure airport (%1) is different to the initial location (%2). Click here to set the initial location to the flight-plan&apos;s airport.</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">The flight-plan departure airport (%1) is different to the initial location (%2). Click here to set the initial location to the flight-plan's airport.</source>
++        <target xml:space="preserve" state="translated">Letisko odletu (%1) v letovom pláne je odlišné od počiatočného umiestnenia (%2). Kliknutím sem nastavíte počiatočné umiestnenie letiska letového plánu.</target>
+         <context-group purpose="location"><context context-type="linenumber">240</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg144">
+         <source xml:space="preserve">Cruise speed:</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Rýchlosť letu:</target>
+         <context-group purpose="location"><context context-type="linenumber">259</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg145">
+         <source xml:space="preserve">Cruise altitude:</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Výška letu:</target>
+         <context-group purpose="location"><context context-type="linenumber">274</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg146">
+@@ -800,22 +800,22 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg147">
+         <source xml:space="preserve">Using</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">S použitím</target>
+         <context-group purpose="location"><context context-type="linenumber">316</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg148">
+         <source xml:space="preserve">High-level (Jet) airways</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">317</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg149">
+         <source xml:space="preserve">Low-level (Victor) airways</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">318</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg150">
+         <source xml:space="preserve">High- &amp; low-level airways</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">319</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg151">
+@@ -835,7 +835,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg154">
+         <source xml:space="preserve">Estimated enroute time:</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Odhadovaný čas cestovania:</target>
+         <context-group purpose="location"><context context-type="linenumber">382</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg155">
+@@ -855,7 +855,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg158">
+         <source xml:space="preserve">Remarks</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Komentáre</target>
+         <context-group purpose="location"><context context-type="linenumber">433</context></context-group>
+       </trans-unit>
+     </group>
+@@ -970,7 +970,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg178">
+         <source xml:space="preserve">Enter the name, partial name or ident of a navaid or fix, or an airport name or ICAO identifier. Alternatively, enter a latitude &amp; longitude: for example 53.4,-3.4 or 18.4S, 87.23W</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">250</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg179">
+@@ -979,13 +979,13 @@ Miestna cesta: %2</target>
+         <context-group purpose="location"><context context-type="linenumber">281</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg180">
+-        <source xml:space="preserve">No results for found search &apos;%1&apos;</source>
++        <source xml:space="preserve">No results for found search '%1'</source>
+         <target xml:space="preserve" state="needs-review-translation">Nenašli sa žiadny výsledky pre hľadaný výraz „%1“</target>
+         <context-group purpose="location"><context context-type="linenumber">301</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg181">
+         <source xml:space="preserve">&lt; Back</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">&lt; Späť</target>
+         <context-group purpose="location"><context context-type="linenumber">332</context></context-group>
+       </trans-unit>
+     </group>
+@@ -1004,7 +1004,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg184">
+         <source xml:space="preserve">Pad</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">279</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg185">
+@@ -1077,7 +1077,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg197">
+         <source xml:space="preserve">Abeam carrier at 180 degrees</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">127</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg198">
+@@ -1087,7 +1087,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg199">
+         <source xml:space="preserve"> from the FLOLS (aka the ball)</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">230</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg200">
+@@ -1097,12 +1097,12 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg201">
+         <source xml:space="preserve">On deck</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">160</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg202">
+         <source xml:space="preserve">Tune navigation radio (TACAN) to carrier</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">277</context></context-group>
+       </trans-unit>
+     </group>
+@@ -1136,7 +1136,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg208">
+         <source xml:space="preserve"> on bearing </source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">151</context></context-group>
+       </trans-unit>
+     </group>
+@@ -1144,8 +1144,8 @@ Miestna cesta: %2</target>
+   <file original="/Users/jmt/FGFS/flightgear/src/GUI/qml/NoDefaultCatalogPanel.qml" datatype="plaintext" source-language="en" target-language="sk"><body>
+     <group restype="x-trolltech-linguist-context" resname="NoDefaultCatalogPanel">
+       <trans-unit id="_msg209">
+-        <source xml:space="preserve">The official FlightGear aircraft hangar is not added, so many standard aircraft will not be available. You can add the  hangar now, or hide this message. The offical hangar can always be restored from the &apos;Add-Ons&apos; page.</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">The official FlightGear aircraft hangar is not added, so many standard aircraft will not be available. You can add the  hangar now, or hide this message. The offical hangar can always be restored from the 'Add-Ons' page.</source>
++        <target xml:space="preserve" state="translated">Nie je pridaný oficiálny hangár lietadiel simulátora FlightGear, preto nebude dostupných veľa štandardných lietadiel. Teraz môžete pridať hangár, alebo skryť túto správu. Oficiálny hangár je možné vždy obnoviť zo stránky „Doplnky“.</target>
+         <context-group purpose="location"><context context-type="linenumber">27</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg210">
+@@ -1183,12 +1183,12 @@ Miestna cesta: %2</target>
+     <group restype="x-trolltech-linguist-context" resname="PlanRouteDetails">
+       <trans-unit id="_msg215">
+         <source xml:space="preserve">Previous Leg</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">19</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg216">
+         <source xml:space="preserve">Next Leg</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">31</context></context-group>
+       </trans-unit>
+     </group>
+@@ -1196,18 +1196,18 @@ Miestna cesta: %2</target>
+   <file original="/Users/jmt/FGFS/flightgear/src/GUI/qml/RouteLegsView.qml" datatype="plaintext" source-language="en" target-language="sk"><body>
+     <group restype="x-trolltech-linguist-context" resname="RouteLegsView">
+       <trans-unit id="_msg217">
+-        <source xml:space="preserve">at %1&apos;</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">at %1'</source>
++        <target xml:space="preserve" state="translated">na %1'</target>
+         <context-group purpose="location"><context context-type="linenumber">86</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg218">
+-        <source xml:space="preserve">above %1&apos;</source>
+-        <target xml:space="preserve" state="needs-review-translation">nad %1&apos;</target>
++        <source xml:space="preserve">above %1'</source>
++        <target xml:space="preserve" state="needs-review-translation">nad %1'</target>
+         <context-group purpose="location"><context context-type="linenumber">89</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg219">
+-        <source xml:space="preserve">below %1&apos;</source>
+-        <target xml:space="preserve" state="needs-review-translation">pod %1&apos;</target>
++        <source xml:space="preserve">below %1'</source>
++        <target xml:space="preserve" state="needs-review-translation">pod %1'</target>
+         <context-group purpose="location"><context context-type="linenumber">92</context></context-group>
+       </trans-unit>
+     </group>
+@@ -1224,18 +1224,18 @@ Miestna cesta: %2</target>
+   <file original="/Users/jmt/FGFS/flightgear/src/GUI/qml/SettingExtraArguments.qml" datatype="plaintext" source-language="en" target-language="sk"><body>
+     <group restype="x-trolltech-linguist-context" resname="SettingExtraArguments">
+       <trans-unit id="_msg221">
+-        <source xml:space="preserve">Enter additional command-line arguments if any are required. See &lt;a href=&quot;http://flightgear.sourceforge.net/getstart-en/getstart-enpa2.html#x5-450004.5&quot;&gt;here&lt;/a&gt; for documentation on possible arguments. &lt;br&gt;&lt;b&gt;Warning:&lt;/b&gt; values entered here always override other settings; &lt;a href=&quot;#view-command-line&quot;&gt;click here&lt;/a&gt; to view the final set of arguments that will be used</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">Enter additional command-line arguments if any are required. See &lt;a href="http://flightgear.sourceforge.net/getstart-en/getstart-enpa2.html#x5-450004.5"&gt;here&lt;/a&gt; for documentation on possible arguments. &lt;br&gt;&lt;b&gt;Warning:&lt;/b&gt; values entered here always override other settings; &lt;a href="#view-command-line"&gt;click here&lt;/a&gt; to view the final set of arguments that will be used</source>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">23</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg222">
+-        <source xml:space="preserve">&lt;b&gt;Warning:&lt;/b&gt; specifying &lt;tt&gt;fg-root&lt;/tt&gt;, &lt;tt&gt;fg-aircraft&lt;/tt&gt;, &lt;tt&gt;fg-scenery&lt;/tt&gt; or &lt;tt&gt;fg-home&lt;/tt&gt; using this section is not recommended, and may cause problem or prevent the simulator from running. Please use the add-ons page to setup scenery and aircrft directories, and the &apos;Select data files location&apos; menu item to change the root data directory.</source>
++        <source xml:space="preserve">&lt;b&gt;Warning:&lt;/b&gt; specifying &lt;tt&gt;fg-root&lt;/tt&gt;, &lt;tt&gt;fg-aircraft&lt;/tt&gt;, &lt;tt&gt;fg-scenery&lt;/tt&gt; or &lt;tt&gt;fg-home&lt;/tt&gt; using this section is not recommended, and may cause problem or prevent the simulator from running. Please use the add-ons page to setup scenery and aircrft directories, and the 'Select data files location' menu item to change the root data directory.</source>
+         <target xml:space="preserve" state="needs-review-translation">&lt;b&gt;Upozornenie:&lt;/b&gt; určenie &lt;tt&gt;fg-root&lt;/tt&gt;, &lt;tt&gt;fg-aircraft&lt;/tt&gt;, &lt;tt&gt;fg-scenery&lt;/tt&gt; alebo &lt;tt&gt;fg-home&lt;/tt&gt; pomocou tejto sekcie nie je odporúčané a môže spôsobiť problémy, alebo zabránenie spusteniu simulátora. Prosím, použite stránku s doplnkami na nastavenie adresárov so scernériou a lietadlami, položku ponuky „Vybrať súbory údajov“ na zmenu koreňového adresára s údajmi.</target>
+         <context-group purpose="location"><context context-type="linenumber">47</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg223">
+         <source xml:space="preserve">&lt;b&gt;Note:&lt;/b&gt; you have entered arguments relating to the startup location below. To prevent problems caused by conflicting settings, the values entered on the location page (for example, airport or altitude) will be ignored.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">58</context></context-group>
+       </trans-unit>
+     </group>
+@@ -1283,32 +1283,32 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg231">
+         <source xml:space="preserve">Enable auto-coordination</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">105</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg232">
+-        <source xml:space="preserve">When flying with the mouse, or a joystick lacking a rudder axis, it&apos;s difficult to manually coordinate aileron and rudder movements during turn. This option automatically commands the rudder to maintain zero slip angle when banking</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">When flying with the mouse, or a joystick lacking a rudder axis, it's difficult to manually coordinate aileron and rudder movements during turn. This option automatically commands the rudder to maintain zero slip angle when banking</source>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">106</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg233">
+         <source xml:space="preserve">Show debugging console</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">118</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg234">
+         <source xml:space="preserve">Open a console window showing debug output from the application.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">119</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg235">
+         <source xml:space="preserve">Enable crash &amp; error reporting</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Povoliť hlásenie nečakaných skončení programu a chýb</target>
+         <context-group purpose="location"><context context-type="linenumber">128</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg236">
+         <source xml:space="preserve">Send crash and error reports to the development team for analysis.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">129</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg237">
+@@ -1323,7 +1323,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg239">
+         <source xml:space="preserve">FlightGear supporters maintain a network of servers to enable global multi-user flight. This requires a moderately fast Internet connection to be usable. Your aircraft will be visible to other users online, and you will see their aircraft.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">161</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg240">
+@@ -1333,7 +1333,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg241">
+         <source xml:space="preserve">Enter a callsign you will use online. This is visible to all users and is how ATC services and other pilots will refer to you. (Maximum of seven characters permitted)</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">178</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg242">
+@@ -1352,7 +1352,7 @@ Miestna cesta: %2</target>
+         <context-group purpose="location"><context context-type="linenumber">234</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg245">
+-        <source xml:space="preserve">Enter a server hostname or IP address, and optionally a port number. (Default port is 5000) For example &apos;localhost:5001&apos;</source>
++        <source xml:space="preserve">Enter a server hostname or IP address, and optionally a port number. (Default port is 5000) For example 'localhost:5001'</source>
+         <target xml:space="preserve" state="needs-review-translation">Zadajte názov hostiteľa servera alebo adresu IP, voliteľne aj číslo portu. (Predvolený port je 5000) Napríklad: „localhost:5001“</target>
+         <context-group purpose="location"><context context-type="linenumber">236</context></context-group>
+       </trans-unit>
+@@ -1373,12 +1373,12 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg249">
+         <source xml:space="preserve">Download location</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">314</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg250">
+         <source xml:space="preserve">FlightGear stores downloaded files (scenery and aircraft) in this location. Depending on your settings, it may grow to a considerable size (many gigabytes). If you change the download location, files will need to be downloaded again. When changing this setting, FlightGear will restart to use the new location correctly.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">315</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg251">
+@@ -1408,7 +1408,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg256">
+         <source xml:space="preserve">Select the initial size of the window (this has no effect in full-screen mode).</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">381</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg257">
+@@ -1418,12 +1418,12 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg258">
+         <source xml:space="preserve">Custom size</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Vlastná veľkosť</target>
+         <context-group purpose="location"><context context-type="linenumber">394</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg259">
+-        <source xml:space="preserve">Enter a custom window size in the form &apos;WWWWW x HHHHH&apos;, for example &apos;1280 x 900&apos;</source>
+-        <target xml:space="preserve" state="needs-review-translation">Zadajte vlastnú veľkosť okna vo formáte &quot;ŠŠŠŠŠ x VVVVV&quot;, napríklad &quot;1280 x 900&quot;</target>
++        <source xml:space="preserve">Enter a custom window size in the form 'WWWWW x HHHHH', for example '1280 x 900'</source>
++        <target xml:space="preserve" state="needs-review-translation">Zadajte vlastnú veľkosť okna vo formáte "ŠŠŠŠŠ x VVVVV", napríklad "1280 x 900"</target>
+         <context-group purpose="location"><context context-type="linenumber">396</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg260">
+@@ -1439,17 +1439,17 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg262">
+         <source xml:space="preserve">anti-aliasing</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Vyhladzovanie</target>
+         <context-group purpose="location"><context context-type="linenumber">429</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg263">
+         <source xml:space="preserve">Low-spec</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">439</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg264">
+         <source xml:space="preserve">The low-spec renderer ensures maximum performance on older computers.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">447</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg265">
+@@ -1465,7 +1465,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg267">
+         <source xml:space="preserve">Atmospheric Light Scattering</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Rozptyľovanie atmosferického svetla (ALS)</target>
+         <context-group purpose="location"><context context-type="linenumber">434</context></context-group>
+         <context-group purpose="location"><context context-type="linenumber">438</context></context-group>
+       </trans-unit>
+@@ -1476,12 +1476,12 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg269">
+         <source xml:space="preserve">The ALS renderer uses a sophisticated physical atmospheric model and several other effects to give realistic rendering of large distances.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">442</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg270">
+         <source xml:space="preserve">Rembrandt is a configurable multi-pass renderer which supports shadow-maps, cinematic effects and more. However, not all aircraft appear correctly and performance will depend greatly on your system hardware.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">444</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg271">
+@@ -1511,7 +1511,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg276">
+         <source xml:space="preserve">By converting images used in rendering to an optimised format loading times and memory use can be improved. This will consume some disk space and take initial time while images are converted, but subsequent loads will be faster, and use less memory.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">489</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg277">
+@@ -1569,7 +1569,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg286">
+         <source xml:space="preserve">&lt;i&gt;set from user arguments (in Settings)&lt;/i&gt;</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">277</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg287">
+@@ -1606,11 +1606,11 @@ Miestna cesta: %2</target>
+     <group restype="x-trolltech-linguist-context" resname="SetupRootDialog">
+       <trans-unit id="_msg291">
+         <source xml:space="preserve">Setup required data files</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+       </trans-unit>
+       <trans-unit id="_msg292">
+         <source xml:space="preserve">TextLabel</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+       </trans-unit>
+       <trans-unit id="_msg293">
+         <source xml:space="preserve">FlightGear version 3.4.5</source>
+@@ -1637,8 +1637,8 @@ Miestna cesta: %2</target>
+         <target xml:space="preserve" state="needs-review-translation">Pre použitie súborov zahrnutých v tejto kópii simulátora FlightGear, kliknite na toto tlačidlo</target>
+       </trans-unit>
+       <trans-unit id="_msg299">
+-        <source xml:space="preserve">To download a compressed archive of the files, click the &apos;Download&apos; button. Once the download is complete, extract the files to a suitable location and choose the folder using the button above.</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">To download a compressed archive of the files, click the 'Download' button. Once the download is complete, extract the files to a suitable location and choose the folder using the button above.</source>
++        <target xml:space="preserve" state="translated">Na prevzatie archívu so skomprimovanými súbormi, kliknite na tlačidlo „Prevziať“. Po dokončení preberania rozbaľte súbory do vhodného umiestnenia a zvoľte priečinok pomocou tlačidla vyššie.</target>
+       </trans-unit>
+       <trans-unit id="_msg300">
+         <source xml:space="preserve">To browse to a downloaded copy of the files on your computer, click this button</source>
+@@ -1654,7 +1654,7 @@ Miestna cesta: %2</target>
+         <context-group purpose="location"><context context-type="linenumber">117</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg302">
+-        <source xml:space="preserve">No aircraft found in the folder &apos;%1&apos; - add anyway?</source>
++        <source xml:space="preserve">No aircraft found in the folder '%1' - add anyway?</source>
+         <target xml:space="preserve" state="needs-review-translation">V priečinku „%1“ sa nenašlo žiadne lietadlo. Pridať ho napriek tomu?</target>
+         <context-group purpose="location"><context context-type="linenumber">141</context></context-group>
+       </trans-unit>
+@@ -1664,7 +1664,7 @@ Miestna cesta: %2</target>
+         <context-group purpose="location"><context context-type="linenumber">158</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg304">
+-        <source xml:space="preserve">The folder &apos;%1&apos; doesn&apos;t appear to contain an addon module - add anyway?</source>
++        <source xml:space="preserve">The folder '%1' doesn't appear to contain an addon module - add anyway?</source>
+         <target xml:space="preserve" state="needs-review-translation">Zdá sa, že priečinok „%1“ neobsahuje žiadny doplnkový modul. Má sa napriek tomu pridať?</target>
+         <context-group purpose="location"><context context-type="linenumber">177</context></context-group>
+       </trans-unit>
+@@ -1679,7 +1679,7 @@ Miestna cesta: %2</target>
+         <context-group purpose="location"><context context-type="linenumber">208</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg307">
+-        <source xml:space="preserve">The folder &apos;%1&apos; doesn&apos;t appear to contain scenery - add anyway?</source>
++        <source xml:space="preserve">The folder '%1' doesn't appear to contain scenery - add anyway?</source>
+         <target xml:space="preserve" state="needs-review-translation">Zdá sa, že priečinok „%1“ neobsahuje žiadnu scenériu. Má sa napriek tomu pridať?</target>
+         <context-group purpose="location"><context context-type="linenumber">227</context></context-group>
+       </trans-unit>
+@@ -1768,7 +1768,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg321">
+         <source xml:space="preserve">The catalog server is blocking access from some reason (forbidden)</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">117</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg322">
+@@ -1837,7 +1837,7 @@ Miestna cesta: %2</target>
+         <context-group purpose="location"><context context-type="linenumber">247</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg333">
+-        <source xml:space="preserve">Problems occured extracting the archive &apos;%1&apos;: %2</source>
++        <source xml:space="preserve">Problems occured extracting the archive '%1': %2</source>
+         <target xml:space="preserve" state="needs-review-translation">Vyskytla sa chyba pri rozbaľovaní archívu „%1“: %2</target>
+         <context-group purpose="location"><context context-type="linenumber">281</context></context-group>
+       </trans-unit>
+@@ -1866,7 +1866,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg337">
+         <source xml:space="preserve"> (will be skipped due to being specified as an additional argument)</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">158</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg338">
+@@ -1917,7 +1917,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg346">
+         <source xml:space="preserve">Currently the built-in data files are being used</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Momentálne sa používajú vstavané súbory s údajmi</target>
+         <context-group purpose="location"><context context-type="linenumber">785</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg347">
+@@ -1927,12 +1927,12 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg348">
+         <source xml:space="preserve">Change the data files used by FlightGear?</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Zmeniť súbory s údajmi použité simulátorom FlightGear?</target>
+         <context-group purpose="location"><context context-type="linenumber">792</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg349">
+         <source xml:space="preserve">FlightGear requires additional files to operate. (Also called the base package, or fg-data) You can restart FlightGear and choose a different data files location, or restore the default setting. %1</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">793</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg350">
+@@ -1992,7 +1992,7 @@ Miestna cesta: %2</target>
+       <trans-unit id="_msg360">
+         <source xml:space="preserve">Problems occurred loading the user interface. This is often due to missing modules on your system. Please report this error to the FlightGear developer list or forum, and take care to mention your system distribution, etc. Please also include the information provided below.
+ </source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">134</context></context-group>
+       </trans-unit>
+     </group>
+@@ -2006,22 +2006,22 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg362">
+         <source xml:space="preserve">%1nm abeam</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">1083</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg363">
+         <source xml:space="preserve">on %1nm final to</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">1085</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg364">
+         <source xml:space="preserve">on deck at %1 on</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">1087</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg365">
+         <source xml:space="preserve">%1 carrier %2 (%3)</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">1089</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg366">
+@@ -2032,7 +2032,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg367">
+         <source xml:space="preserve">on %1-mile final to active runway</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">1110</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg368">
+@@ -2042,32 +2042,32 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg369">
+         <source xml:space="preserve">at an available parking position</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">na dostupnej parkovacej pozícii</target>
+         <context-group purpose="location"><context context-type="linenumber">1115</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg370">
+         <source xml:space="preserve">on %2-mile final to %1</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">1120</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg371">
+         <source xml:space="preserve">on %1</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">na %1</target>
+         <context-group purpose="location"><context context-type="linenumber">1122</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg372">
+         <source xml:space="preserve">on pad %1</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">1125</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg373">
+         <source xml:space="preserve">at parking position %1</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">na parkovacej pozícii %1</target>
+         <context-group purpose="location"><context context-type="linenumber">1127</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg374">
+         <source xml:space="preserve">%2 (%1): %3</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">%2 (%1): %3</target>
+         <context-group purpose="location"><context context-type="linenumber">1130</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg375">
+@@ -2077,12 +2077,12 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg376">
+         <source xml:space="preserve">%1nm %2 of</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">%1nm %2 z</target>
+         <context-group purpose="location"><context context-type="linenumber">1134</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg377">
+         <source xml:space="preserve">%2 waypoint %1</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">1146</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg378">
+@@ -2115,7 +2115,7 @@ Miestna cesta: %2</target>
+     <group restype="x-trolltech-linguist-context" resname="QObject">
+       <trans-unit id="_msg382">
+         <source xml:space="preserve">On approach</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Pred pristátím</target>
+         <context-group purpose="location"><context context-type="linenumber">145</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg383">
+@@ -2125,7 +2125,7 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg384">
+         <source xml:space="preserve">Parked, cold &amp; dark</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Zaparkované, studené a zhasnuté</target>
+         <context-group purpose="location"><context context-type="linenumber">149</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg385">
+@@ -2135,29 +2135,29 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg386">
+         <source xml:space="preserve">Cruise</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Let</target>
+         <context-group purpose="location"><context context-type="linenumber">153</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg387">
+         <source xml:space="preserve">Ready to taxi</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Pripravené na rolovanie</target>
+         <context-group purpose="location"><context context-type="linenumber">155</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg388">
+         <source xml:space="preserve">On approach to a carrier</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">157</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg389">
+         <source xml:space="preserve">Ready for catapult launch</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Pripravené na katapultovanie</target>
+         <context-group purpose="location"><context context-type="linenumber">159</context></context-group>
+       </trans-unit>
+     </group>
+     <group restype="x-trolltech-linguist-context" resname="StatesModel">
+       <trans-unit id="_msg390">
+         <source xml:space="preserve">Select state based on startup position.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">195</context></context-group>
+       </trans-unit>
+     </group>
+@@ -2198,17 +2198,17 @@ Miestna cesta: %2</target>
+     <group restype="x-trolltech-linguist-context" resname="LockFileDialog">
+       <trans-unit id="_msg397">
+         <source xml:space="preserve">Multiple copies of FlightGear running</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Sú spustené viaceré kópie simulátora FlightGear</target>
+         <context-group purpose="location"><context context-type="linenumber">515</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg398">
+         <source xml:space="preserve">FlightGear has detected another copy is already running. This copy will run in read-only mode, so downloads will not be possible, and settings will not be saved.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Simulátor FlightGear zistil, že iná kópia je už spustená. Táto kópia bude spustená v režime iba na čítanie, takže preberanie nebude možné a nastavenia nebudú uložené.</target>
+         <context-group purpose="location"><context context-type="linenumber">517</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg399">
+         <source xml:space="preserve">If you are sure another copy is not running on this computer, you can choose to reset the lock file, and run this copy as normal. Alternatively, you can close this copy of the software.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">522</context></context-group>
+       </trans-unit>
+     </group>
+@@ -2227,32 +2227,32 @@ Miestna cesta: %2</target>
+       </trans-unit>
+       <trans-unit id="_msg402">
+         <source xml:space="preserve">This copy of FlightGear does not include the base data files. Please select a suitable folder containing a previously download set of files.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Táto kópia simulátoru FlightGear neobsahuje základné súbory s údajmi. Prosím, vyberte vhodný priečinok, ktorý obsahuje predchádzajúcu prevzatú sadu súborov.</target>
+         <context-group purpose="location"><context context-type="linenumber">245</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg403">
+-        <source xml:space="preserve">The requested location &apos;%1&apos; does not appear to be a valid set of data files for FlightGear</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">The requested location '%1' does not appear to be a valid set of data files for FlightGear</source>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">250</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg404">
+-        <source xml:space="preserve">Detected incompatible version of the data files: version %1 found, but this is FlightGear %2. (At location: &apos;%3&apos;) Please install or select a matching set of data files.</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">Detected incompatible version of the data files: version %1 found, but this is FlightGear %2. (At location: '%3') Please install or select a matching set of data files.</source>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">256</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg405">
+         <source xml:space="preserve">Please select or download a copy of the FlightGear data files.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Prosím, vyberte alebo prevezmite kópiu súborov s údajmi simulátora FlightGear.</target>
+         <context-group purpose="location"><context context-type="linenumber">263</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg406">
+         <source xml:space="preserve">The choosen location (%1) does not appear to contain FlightGear data files. Please try another location.</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Zdá sa, že zvolené umiestnenie (%1) nie je obsiahnuté v súboroch s údajmi simulátora FlightGear. Prosím, skúste iné umiestnenie.</target>
+         <context-group purpose="location"><context context-type="linenumber">267</context></context-group>
+       </trans-unit>
+       <trans-unit id="_msg407">
+         <source xml:space="preserve">The choosen location (%1) contains files for version %2, but this is FlightGear %3. Please update or try another location</source>
+-        <target xml:space="preserve"></target>
++        <target xml:space="preserve" state="translated">Zvolené umiestnenie (%1) obsahuje súbory pre verziu %2, ale spustená je verzia simulátoru FlightGear %3. Prosím, aktualizujte simulátor, alebo skúste iné umiestnenie.</target>
+         <context-group purpose="location"><context context-type="linenumber">273</context></context-group>
+       </trans-unit>
+     </group>
+@@ -2260,8 +2260,8 @@ Miestna cesta: %2</target>
+   <file original="/Users/jmt/FGFS/flightgear/src/GUI/qml/FirstRun.qml" datatype="plaintext" source-language="en" target-language="sk"><body>
+     <group restype="x-trolltech-linguist-context" resname="FirstRun">
+       <trans-unit id="_msg408">
+-        <source xml:space="preserve">FlightGear can send crash and error reports to the development team. This helps to fix common problems and improve the software for everyone. The reports don&apos;t contain personal information, but depending on the problem, may contain information such as the aircraft in use, startup airport, or your graphics card.</source>
+-        <target xml:space="preserve"></target>
++        <source xml:space="preserve">FlightGear can send crash and error reports to the development team. This helps to fix common problems and improve the software for everyone. The reports don't contain personal information, but depending on the problem, may contain information such as the aircraft in use, startup airport, or your graphics card.</source>
++        <target xml:space="preserve"/>
+         <context-group purpose="location"><context context-type="linenumber">14</context></context-group>
+       </trans-unit>
+     </group>
+diff --git a/Translations/sk/FlightGear-nonQt.xlf b/Translations/sk/FlightGear-nonQt.xlf
+index 3e424d92c..f2ba554f3 100644
+--- a/Translations/sk/FlightGear-nonQt.xlf
++++ b/Translations/sk/FlightGear-nonQt.xlf
+@@ -1,19 +1,19 @@
+-<?xml version='1.0' encoding='UTF-8'?>
++<?xml version="1.0" encoding="UTF-8"?>
+ <xliff version="1.2" xmlns="urn:oasis:names:tc:xliff:document:1.2" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:schemaLocation="urn:oasis:names:tc:xliff:document:1.2 xliff-core-1.2.xsd">
+   <file datatype="plaintext" original="" source-language="en-US" target-language="sk" xml:space="preserve">
+     <body>
+       <group resname="menu" restype="x-trolltech-linguist-context">
+         <trans-unit approved="no" id="menu/adjust-hud:0" translate="yes">
+           <source>Adjust HUD Properties</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/adjust-lod:0" translate="yes">
+           <source>Adjust LOD Ranges</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/ai:0" translate="yes">
+           <source>AI</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/aircraft-center:0" translate="yes">
+           <source>Aircraft Center (Experimental)</source>
+@@ -29,7 +29,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/atc-in-range:0" translate="yes">
+           <source>ATC Services in Range</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/autopilot:0" translate="yes">
+           <source>Autopilot</source>
+@@ -41,15 +41,15 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/autostart:0" translate="yes">
+           <source>Autostart</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/basic-keys:0" translate="yes">
+           <source>Basic Simulator Keys</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/carrier:0" translate="yes">
+           <source>Carrier Controls</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/cockpit-view-options:0" translate="yes">
+           <source>Cockpit View Options</source>
+@@ -57,15 +57,15 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/common-keys:0" translate="yes">
+           <source>Common Aircraft Keys</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/configure-dev-extension:0" translate="yes">
+           <source>Configure Development Extensions</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/cycle-gui:0" translate="yes">
+           <source>Cycle GUI Style</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/debug:0" translate="yes">
+           <source>Debug</source>
+@@ -73,11 +73,11 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/development-keys:0" translate="yes">
+           <source>Development Keys</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/display-marker:0" translate="yes">
+           <source>Display Tutorial Marker</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/doc-browser:0" translate="yes">
+           <source>Documentation Browser</source>
+@@ -85,7 +85,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/dump-scene-graph:0" translate="yes">
+           <source>Dump Scene Graph</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/environment:0" translate="yes">
+           <source>Environment</source>
+@@ -109,15 +109,15 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/fg1000-mfd:0" translate="yes">
+           <source>FG1000 MFD</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/fg1000-pfd:0" translate="yes">
+           <source>FG1000 PFD</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/fgcom-settings:0" translate="yes">
+           <source>FGCom Settings</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/file:0" translate="yes">
+           <source>File</source>
+@@ -125,7 +125,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/fuel-and-payload:0" translate="yes">
+           <source>Fuel and Payload</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/global-weather:0" translate="yes">
+           <source>Weather</source>
+@@ -169,7 +169,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/jetway:0" translate="yes">
+           <source>Jetway Settings</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/joystick-config:0" translate="yes">
+           <source>Joystick Configuration</source>
+@@ -181,7 +181,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/lag-adjust:0" translate="yes">
+           <source>Lag Settings</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/load-tape:0" translate="yes">
+           <source>Load Flight Recorder Tape</source>
+@@ -217,7 +217,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/mp-carrier:0" translate="yes">
+           <source>MPCarrier Selection</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/mp-chat:0" translate="yes">
+           <source>Chat Dialog</source>
+@@ -233,99 +233,99 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/mp-settings:0" translate="yes">
+           <source>Multiplayer Settings</source>
+-          <target />
++          <target state="translated">Nastavenia viacerých hráčov</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/multiplayer:0" translate="yes">
+           <source>Multiplayer</source>
+-          <target />
++          <target state="translated">Viacero hráčov</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/nasal-console:0" translate="yes">
+           <source>Nasal Console</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/nasal-repl-interpreter:0" translate="yes">
+           <source>Nasal REPL Interpreter</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/next-waypoint:0" translate="yes">
+           <source>Next Waypoint</source>
+-          <target />
++          <target state="translated">Nasledovný cestovný bod</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/performance-monitor:0" translate="yes">
+           <source>Monitor System Performance</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/pilot-offset:0" translate="yes">
+           <source>Adjust View Position</source>
+-          <target />
++          <target state="translated">Upraviť pozíciu zobrazenia</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/position-in-air:0" translate="yes">
+           <source>Position Aircraft In Air</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/previous-waypoint:0" translate="yes">
+           <source>Previous Waypoint</source>
+-          <target />
++          <target state="translated">Predošlý cestovný bod</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/print-rendering-statistics:0" translate="yes">
+           <source>Print Rendering Statistics</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/print-scene-info:0" translate="yes">
+           <source>Print Visible Scene Info</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/property-browser:0" translate="yes">
+           <source>Browse Internal Properties</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/pushback:0" translate="yes">
+           <source>Pushback</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/radio:0" translate="yes">
+           <source>Radio Settings</source>
+-          <target />
++          <target state="translated">Nastavenia rádia</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/random-attitude:0" translate="yes">
+           <source>Random Attitude</source>
+-          <target />
++          <target state="translated">Náhodná výška</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/random-failures:0" translate="yes">
+           <source>Random Failures</source>
+-          <target />
++          <target state="translated">Náhodné zlyhania</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/reload-autopilot:0" translate="yes">
+           <source>Reload Autopilot</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/reload-gui:0" translate="yes">
+           <source>Reload GUI</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/reload-hud:0" translate="yes">
+           <source>Reload HUD</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/reload-input:0" translate="yes">
+           <source>Reload Input</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/reload-materials:0" translate="yes">
+           <source>Reload Materials</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/reload-model:0" translate="yes">
+           <source>Reload Aircraft Model</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/reload-network:0" translate="yes">
+           <source>Reload Network</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/reload-panel:0" translate="yes">
+           <source>Reload Panel</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/reload-scenery:0" translate="yes">
+           <source>Reload Scenery</source>
+@@ -333,11 +333,11 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/rembrandt-buffers-choice:0" translate="yes">
+           <source>Select Rendering Buffers</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/rendering-buffers:0" translate="yes">
+           <source>Hide/Show Rendering Buffers</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/rendering-options:0" translate="yes">
+           <source>Rendering Options</source>
+@@ -345,15 +345,15 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/replay:0" translate="yes">
+           <source>Instant Replay</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/reset:0" translate="yes">
+           <source>Reset</source>
+-          <target />
++          <target state="translated">Obnoviť</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/route-manager:0" translate="yes">
+           <source>Route Manager</source>
+-          <target />
++          <target state="translated">Správca trás</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/save-tape:0" translate="yes">
+           <source>Save Flight Recorder Tape</source>
+@@ -361,63 +361,63 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/scenario:0" translate="yes">
+           <source>Traffic and Scenario Settings</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/select-livery:0" translate="yes">
+           <source>Select Livery</source>
+-          <target />
++          <target state="translated">Vybrať zovňajšok</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/show-hide-yokes:0" translate="yes">
+           <source>Show/hide yokes</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/snap-shot:0" translate="yes">
+           <source>Screenshot</source>
+-          <target />
++          <target state="translated">Snímka obrazovky</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/snap-shot-dir:0" translate="yes">
+           <source>Screenshot Directory</source>
+-          <target />
++          <target state="translated">Adresár snímok obrazovky</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/sound-config:0" translate="yes">
+           <source>Sound Configuration</source>
+-          <target />
++          <target state="translated">Nastavenie zvuku</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/statistics-display:0" translate="yes">
+           <source>Cycle On-Screen Statistics</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/stereoscopic-options:0" translate="yes">
+           <source>Stereoscopic View Options</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/stopwatch:0" translate="yes">
+           <source>Stopwatch</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/swift_connection:0" translate="yes">
+           <source>swift Connection</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/system-failures:0" translate="yes">
+           <source>System Failures</source>
+-          <target />
++          <target state="translated">Systémové zlyhania</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/tanker:0" translate="yes">
+           <source>Tanker Controls</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/terrasync:0" translate="yes">
+           <source>Scenery Download</source>
+-          <target />
++          <target state="translated">Prevzatie scenérie</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/tiller-steering:0" translate="yes">
+           <source>Tiller Steering</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/time-settings:0" translate="yes">
+           <source>Time Settings</source>
+-          <target />
++          <target state="translated">Nastavenia času</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/toggle-fullscreen:0" translate="yes">
+           <source>Toggle Fullscreen</source>
+@@ -425,11 +425,11 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/toggle-glide-slope:0" translate="yes">
+           <source>Toggle Glide Slope Tunnel</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/tower-position:0" translate="yes">
+           <source>Tower Position</source>
+-          <target />
++          <target state="translated">Pozícia veže</target>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/tutorial-start:0" translate="yes">
+           <source>Tutorials</source>
+@@ -445,11 +445,11 @@
+         </trans-unit>
+         <trans-unit approved="no" id="menu/wildfire-settings:0" translate="yes">
+           <source>Wildfire Settings</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/wingman:0" translate="yes">
+           <source>Wingman Controls</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="menu/write-video-config:0" translate="yes">
+           <source>Save Video Configuration</source>
+@@ -459,39 +459,39 @@
+       <group resname="options" restype="x-trolltech-linguist-context">
+         <trans-unit approved="no" id="options/AV400-desc:0" translate="yes">
+           <source>Emit the Garmin AV400 protocol required to drive a Garmin 196/296 series GPS</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/AV400Sim-desc:0" translate="yes">
+           <source>Emit the set of AV400 strings required to drive a Garmin 400-series GPS from FlightGear</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/adf1-desc:0" translate="yes">
+           <source>Set the ADF1 radio frequency, optionally preceded by a card rotation.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/adf2-desc:0" translate="yes">
+           <source>Set the ADF2 radio frequency, optionally preceded by a card rotation.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/aero-desc:0" translate="yes">
+           <source>Select aircraft aerodynamics model to load</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/ai-scenario:0" translate="yes">
+           <source>Add and enable a new scenario. Multiple options are allowed.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/aircraft-desc:0" translate="yes">
+           <source>Select an aircraft profile as defined by a top level &lt;name&gt;-set.xml</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/aircraft-dir-desc:0" translate="yes">
+           <source>Specify the exact directory to use for the aircraft (normally not required, but may be useful). Interpreted relatively to the current directory. Causes the &lt;path-cache&gt; from autosave_X_Y.xml, as well as --fg-aircraft and the FG_AIRCRAFT environment variable to be bypassed.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/aircraft-model-options:0" translate="yes">
+           <source>Aircraft model directory (UIUC FDM ONLY)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/aircraft-options:0" translate="yes">
+           <source>Aircraft</source>
+@@ -499,7 +499,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/airport-desc:0" translate="yes">
+           <source>Specify starting position relative to an airport</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/altitude-desc:0" translate="yes">
+           <source>Starting altitude</source>
+@@ -507,15 +507,15 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/arm-desc:0" translate="yes">
+           <source>Specify a multiplier for the aspect ratio.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/atcsim-desc:0" translate="yes">
+           <source>Open connection using the ATC sim protocol (atc610x)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/atlas-desc:0" translate="yes">
+           <source>Open connection using the Atlas protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/audio-options:0" translate="yes">
+           <source>Audio Options</source>
+@@ -527,43 +527,43 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/bpp-desc:0" translate="yes">
+           <source>Specify the bits per pixel</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/browser-app-desc:0" translate="yes">
+           <source>Specify path to your web browser</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/callsign-desc:0" translate="yes">
+           <source>assign a unique name to a player</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/carrier-abeam-desc:0" translate="yes">
+           <source>Start on downwind abeam the selected carrier (must also specify a carrier)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/carrier-desc:0" translate="yes">
+           <source>Specify starting position on an AI carrier</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/ceiling-desc:0" translate="yes">
+           <source>Create an overcast ceiling, optionally with a specific thickness (defaults to 2000 ft).</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/com1-desc:0" translate="yes">
+           <source>Set the COM1 radio frequency</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/com2-desc:0" translate="yes">
+           <source>Set the COM2 radio frequency</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/config-desc:0" translate="yes">
+           <source>Load additional properties from path</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/console-desc:0" translate="yes">
+           <source>Display console (Windows specific)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/debugging-options:0" translate="yes">
+           <source>Debugging Options</source>
+@@ -571,275 +571,275 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-ai-models-desc:0" translate="yes">
+           <source>Deprecated option (disable internal AI subsystem)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-ai-traffic-desc:0" translate="yes">
+           <source>Disable artificial traffic.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-anti-alias-hud-desc:0" translate="yes">
+           <source>Disable anti-aliased HUD</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-auto-coordination-desc:0" translate="yes">
+           <source>Disable auto coordination</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-clock-freeze-desc:0" translate="yes">
+           <source>Clock advances normally</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-clouds-desc:0" translate="yes">
+           <source>Disable 2D (flat) cloud layers</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-clouds3d-desc:0" translate="yes">
+           <source>Disable 3D (volumetric) cloud layers</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-distance-attenuation:0" translate="yes">
+           <source>Disable runway light distance attenuation</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-enhanced-lighting:0" translate="yes">
+           <source>Disable enhanced runway lighting</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-fgcom-desc:0" translate="yes">
+           <source>Disable FGCom built-in</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-freeze-desc:0" translate="yes">
+           <source>Start in a running state</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-fuel-freeze-desc:0" translate="yes">
+           <source>Fuel is consumed normally</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-fullscreen-desc:0" translate="yes">
+           <source>Disable fullscreen mode</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-horizon-effect:0" translate="yes">
+           <source>Disable celestial body growth illusion near the horizon</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-hud-3d-desc:0" translate="yes">
+           <source>Disable 3D HUD</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-hud-desc:0" translate="yes">
+           <source>Disable Heads Up Display (HUD)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-mouse-pointer-desc:0" translate="yes">
+           <source>Disable extra mouse pointer</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-panel-desc:0" translate="yes">
+           <source>Disable instrument panel</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-random-buildings-desc:0" translate="yes">
+           <source>Exclude random buildings objects</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-random-objects-desc:0" translate="yes">
+           <source>Exclude random scenery objects</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-random-vegetation-desc:0" translate="yes">
+           <source>Exclude random vegetation objects</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-real-weather-fetch-desc:0" translate="yes">
+           <source>Disable METAR based real weather fetching</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-rembrandt-desc:0" translate="yes">
+           <source>Disable Rembrandt rendering</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-save-on-exit:0" translate="yes">
+           <source>Don't save preferences upon program exit</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-sound-desc:0" translate="yes">
+           <source>Disable sound effects</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-specular-highlight:0" translate="yes">
+           <source>Disable specular reflections on textured objects</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-splash-screen-desc:0" translate="yes">
+           <source>Disable splash screen</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-terrasync-desc:0" translate="yes">
+           <source>Disable automatic scenery downloads/updates</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-textures-desc:0" translate="yes">
+           <source>Disable textures</source>
+-          <target />
++          <target state="translated">Zakázať textúry</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/disable-wireframe-desc:0" translate="yes">
+           <source>Disable wireframe drawing mode</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/dme-desc:0" translate="yes">
+           <source>Slave the DME to one of the NAV radios, or set its internal frequency.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/download-dir-desc:0" translate="yes">
+           <source>Base directory to use for aircraft and scenery downloads (the TerraSync scenery directory may be specifically set with --terrasync-dir)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-ai-models-desc:0" translate="yes">
+           <source>Enable AI subsystem (required for multi-player, AI traffic and many other animations)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-ai-traffic-desc:0" translate="yes">
+           <source>Enable artificial traffic.</source>
+-          <target />
++          <target state="translated">Povoliť umelú premávku.</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-anti-alias-hud-desc:0" translate="yes">
+           <source>Enable anti-aliased HUD</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-auto-coordination-desc:0" translate="yes">
+           <source>Enable auto coordination</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-clock-freeze-desc:0" translate="yes">
+           <source>Do not advance clock</source>
+-          <target />
++          <target state="translated">Zastaviť čas</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-clouds-desc:0" translate="yes">
+           <source>Enable 2D (flat) cloud layers</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-clouds3d-desc:0" translate="yes">
+           <source>Enable 3D (volumetric) cloud layers</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-distance-attenuation:0" translate="yes">
+           <source>Enable runway light distance attenuation</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-enhanced-lighting:0" translate="yes">
+           <source>Enable enhanced runway lighting</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-fgcom-desc:0" translate="yes">
+           <source>Enable FGCom built-in</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-freeze-desc:0" translate="yes">
+           <source>Start in a frozen state</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-fuel-freeze-desc:0" translate="yes">
+           <source>Fuel tank quantity forced to remain constant</source>
+-          <target />
++          <target state="translated">Vynútiť stále množstvo paliva v nádržiach</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-fullscreen-desc:0" translate="yes">
+           <source>Enable fullscreen mode</source>
+-          <target />
++          <target state="translated">Povoliť režim na celú obrazovku</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-horizon-effect:0" translate="yes">
+           <source>Enable celestial body growth illusion near the horizon</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-hud-3d-desc:0" translate="yes">
+           <source>Enable 3D HUD</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-hud-desc:0" translate="yes">
+           <source>Enable Heads Up Display (HUD)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-mouse-pointer-desc:0" translate="yes">
+           <source>Enable extra mouse pointer</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-mouse-pointer-desc:1" translate="yes">
+           <source>(i.e. for full screen Voodoo based cards)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-panel-desc:0" translate="yes">
+           <source>Enable instrument panel</source>
+-          <target />
++          <target state="translated">Povoliť prístrojovú dosku</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-random-buildings-desc:0" translate="yes">
+           <source>Include random buildings objects</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-random-objects-desc:0" translate="yes">
+           <source>Include random scenery objects</source>
+-          <target />
++          <target state="translated">Zahrnúť náhodné objekty scenérie</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-random-vegetation-desc:0" translate="yes">
+           <source>Include random vegetation objects</source>
+-          <target />
++          <target state="translated">Zahrnúť náhodné objekty vegetácie</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-real-weather-fetch-desc:0" translate="yes">
+           <source>Enable METAR based real weather fetching (this requires an open internet connection)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-rembrandt-desc:0" translate="yes">
+           <source>Enable Rembrandt rendering</source>
+-          <target />
++          <target state="translated">Povoliť vykresľovanie Rembrandt</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-save-on-exit:0" translate="yes">
+           <source>Allow saving preferences at program exit</source>
+-          <target />
++          <target state="translated">Umožniť ukladanie predvolieb pri ukončení programu</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-sound-desc:0" translate="yes">
+           <source>Enable sound effects</source>
+-          <target />
++          <target state="translated">Povoliť zvukové efekty</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-specular-highlight:0" translate="yes">
+           <source>Enable specular reflections on textured objects</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-splash-screen-desc:0" translate="yes">
+           <source>Enable splash screen</source>
+-          <target />
++          <target state="translated">Povoliť úvodnú obrazovku</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-terrasync-desc:0" translate="yes">
+           <source>Enable automatic scenery downloads/updates</source>
+-          <target />
++          <target state="translated">Povoliť automatické preberanie/aktualizovanie scenérie</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-textures-desc:0" translate="yes">
+           <source>Enable textures</source>
+-          <target />
++          <target state="translated">Povoliť textúry</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/enable-wireframe-desc:0" translate="yes">
+           <source>Enable wireframe drawing mode</source>
+-          <target />
++          <target state="translated">Povoliť režim vykresľovania drôtového modelu</target>
+         </trans-unit>
+         <trans-unit approved="no" id="options/environment-options:0" translate="yes">
+           <source>Environment Options</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/failure-desc:0" translate="yes">
+           <source>Fail the pitot, static, vacuum, or electrical system (repeat the option for multiple system failures).</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fdm-desc:0" translate="yes">
+           <source>Select the core flight dynamics model</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fdm-desc:1" translate="yes">
+           <source>Can be one of jsb, larcsim, yasim, magic, balloon, ada, external, or null</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fdm-options:0" translate="yes">
+           <source>Flight Model</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/features-options:0" translate="yes">
+           <source>Features</source>
+@@ -847,59 +847,59 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/fg-aircraft-desc:0" translate="yes">
+           <source>Specify additional aircraft directory path(s) (alternatively, you can use --aircraft-dir to target a specific aircraft in a given directory)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fg-root-desc:0" translate="yes">
+           <source>Specify the root data path</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fg-scenery-desc:0" translate="yes">
+           <source>Specify the scenery path(s);</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fg-scenery-desc:1" translate="yes">
+           <source>Defaults to $FG_ROOT/Scenery</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fgviewer-desc:0" translate="yes">
+           <source>Use a model viewer rather than load the entire simulator;</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fix-desc:0" translate="yes">
+           <source>Specify starting position relative to a fix</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/flarm-desc:0" translate="yes">
+           <source>Open connection using the Flarm protocol, which includes NMEA/GPS and traffic reporting messages</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/flight-plan-desc:0" translate="yes">
+           <source>Read all waypoints from a file</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fog-disable-desc:0" translate="yes">
+           <source>Disable fog/haze</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fog-fastest-desc:0" translate="yes">
+           <source>Enable fastest fog/haze</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fog-nicest-desc:0" translate="yes">
+           <source>Enable nicest fog/haze</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fov-desc:0" translate="yes">
+           <source>Specify field of view angle</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/fpe-desc:0" translate="yes">
+           <source>Abort on encountering a floating point exception;</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/garmin-desc:0" translate="yes">
+           <source>Open connection using the Garmin GPS protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/general-options:0" translate="yes">
+           <source>General Options</source>
+@@ -907,207 +907,207 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/generic-desc:0" translate="yes">
+           <source>Open connection using a predefined communication interface and a preselected communication protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/geometry-desc:0" translate="yes">
+           <source>Specify window geometry (640x480, etc)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/glideslope-desc:0" translate="yes">
+           <source>Specify flight path angle (can be positive)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/heading-desc:0" translate="yes">
+           <source>Specify heading (yaw) angle (Psi)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/help-desc:0" translate="yes">
+           <source>Show the most relevant command line options</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/httpd-desc:0" translate="yes">
+           <source>Enable http server on the specified address. Specify the port or address:port to bind to.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/hud-culled-desc:0" translate="yes">
+           <source>Hud displays percentage of triangles culled</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/hud-options:0" translate="yes">
+           <source>Hud Options</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/hud-tris-desc:0" translate="yes">
+           <source>Hud displays number of triangles rendered</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/in-air-desc:0" translate="yes">
+           <source>Start in air (implied when using --altitude)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/io-options:0" translate="yes">
+           <source>IO Options</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/joyclient-desc:0" translate="yes">
+           <source>Open connection to an Agwagon joystick</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/jpg-httpd-desc:0" translate="yes">
+           <source>Enable screen shot http server on the specified port (replaced by --httpd)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/jsclient-desc:0" translate="yes">
+           <source>Open connection to a remote joystick</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/json-report-desc:0" translate="yes">
+           <source>Print a report in JSON format on the standard output, giving information such as the FlightGear version, $FG_ROOT, $FG_HOME, aircraft and scenery paths, etc.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/language-desc:0" translate="yes">
+           <source>Select the language for this session</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/lat-desc:0" translate="yes">
+           <source>Starting latitude (south = -)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/launcher-desc:0" translate="yes">
+           <source>Use GUI launcher</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/livery-desc:0" translate="yes">
+           <source>Select aircraft livery</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/load-tape-desc:0" translate="yes">
+           <source>Load recording of earlier flightgear session</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/log-class-desc:0" translate="yes">
+           <source>Specify which logging class(es) to use</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/log-dir-desc:0" translate="yes">
+           <source>Log to directory DIR. The special value 'desktop' causes logging to the desktop (OS-dependent location). This option may be given several times, using a different value each time. Inside the specified directory, the written log file is named FlightGear_YYYY-MM-DD_&lt;num&gt;.log, where &lt;num&gt; takes the values 0, 1, 2, etc.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/log-level-desc:0" translate="yes">
+           <source>Specify which logging level to use</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/lon-desc:0" translate="yes">
+           <source>Starting longitude (west = -)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/mach-desc:0" translate="yes">
+           <source>Specify initial mach number</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/materials-file-desc:0" translate="yes">
+           <source>Specify the materials file used to render the scenery (default: Materials/regions/materials.xml)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/max-fps-desc:0" translate="yes">
+           <source>Maximum frame rate in Hz.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/metar-desc:0" translate="yes">
+           <source>Pass a METAR string to set up static weather (this implies --disable-real-weather-fetch)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/min-aircraft-status:0" translate="yes">
+           <source>Allows you to define a minimum status level (=development status) for all listed aircraft</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/model-hz-desc:0" translate="yes">
+           <source>Run the FDM this rate (iterations per second)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/multiplay-desc:0" translate="yes">
+           <source>Specify multipilot communication settings</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/multiplayer-options:0" translate="yes">
+           <source>MultiPlayer Options</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/native-ctrls-desc:0" translate="yes">
+           <source>Open connection using the FG Native Controls protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/native-desc:0" translate="yes">
+           <source>Open connection using the FG Native protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/native-fdm-desc:0" translate="yes">
+           <source>Open connection using the FG Native FDM protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/native-gui-desc:0" translate="yes">
+           <source>Open connection using the FG Native GUI protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/nav1-desc:0" translate="yes">
+           <source>Set the NAV1 radio frequency, optionally preceded by a radial.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/nav2-desc:0" translate="yes">
+           <source>Set the NAV2 radio frequency, optionally preceded by a radial.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/ndb-desc:0" translate="yes">
+           <source>Specify starting position relative to an NDB</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/ndb-freq-desc:0" translate="yes">
+           <source>Specify the frequency of the NDB. Use with --ndb=ID</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/network-options:0" translate="yes">
+           <source>Network Options</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/nmea-desc:0" translate="yes">
+           <source>Open connection using the NMEA protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/notrim-desc:0" translate="yes">
+           <source>Do NOT attempt to trim the model</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/notrim-desc:1" translate="yes">
+           <source>(only with fdm=jsbsim)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/offset-azimuth-desc:0" translate="yes">
+           <source>Specify heading to reference point</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/offset-distance-desc:0" translate="yes">
+           <source>Specify distance to reference point (statute miles)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/on-ground-desc:0" translate="yes">
+           <source>Start at ground level (default)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/opengc-desc:0" translate="yes">
+           <source>Open connection using the OpenGC protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/parking-id-desc:0" translate="yes">
+           <source>Specify parking position at an airport (must also specify an airport)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/parkpos-desc:0" translate="yes">
+           <source>Specify which starting position on an AI carrier (must also specify a carrier)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/pitch-desc:0" translate="yes">
+           <source>Specify pitch angle (Theta)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/position-options:0" translate="yes">
+           <source>Initial Position and Orientation</source>
+@@ -1115,19 +1115,19 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/prop-desc:0" translate="yes">
+           <source>Set property &lt;name&gt; to &lt;value&gt;. &lt;type&gt; can be one of string, double, float, long, int, or bool.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/props-desc:0" translate="yes">
+           <source>Open connection using the interactive property manager</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/proxy-desc:0" translate="yes">
+           <source>Specify which proxy server (and port) to use. The username and password are optional and should be MD5 encoded already. This option is only useful when used in conjunction with the real-weather-fetch option.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/pve-desc:0" translate="yes">
+           <source>Open connection using the PVE protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/random-objects-desc:0" translate="yes">
+           <source>(buildings, etc.)</source>
+@@ -1135,11 +1135,11 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/random-wind-desc:0" translate="yes">
+           <source>Set up random wind direction and speed</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/ray-desc:0" translate="yes">
+           <source>Open connection using the Ray Woodworth motion chair protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/rendering-options:0" translate="yes">
+           <source>Rendering Options</source>
+@@ -1147,47 +1147,47 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/restore-defaults-desc:0" translate="yes">
+           <source>Reset all user settings to their defaults (rendering options etc)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/roc-desc:0" translate="yes">
+           <source>Specify initial climb rate (can be negative)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/roll-desc:0" translate="yes">
+           <source>Specify roll angle (Phi)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/route-options:0" translate="yes">
+           <source>Route/Way Point Options</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/rul-desc:0" translate="yes">
+           <source>Open connection using the RUL protocol</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/runway-no-desc:0" translate="yes">
+           <source>Specify starting runway (must also specify an airport)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/season-desc:0" translate="yes">
+           <source>Specify the startup season</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/shading-flat-desc:0" translate="yes">
+           <source>Enable flat shading</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/shading-smooth-desc:0" translate="yes">
+           <source>Enable smooth shading</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/show-aircraft-desc:0" translate="yes">
+           <source>Print a list of the currently available aircraft types</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/show-sound-devices-desc:0" translate="yes">
+           <source>Show a list of available audio device</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/situation-options:0" translate="yes">
+           <source>Situation Options</source>
+@@ -1195,39 +1195,39 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/sound-device-desc:0" translate="yes">
+           <source>Explicitly specify the audio device to use</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/speed-desc:0" translate="yes">
+           <source>Run the FDM 'n' times faster than real time</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/start-date-desc:0" translate="yes">
+           <source>Specify a starting date/time with respect to</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/telnet-desc:0" translate="yes">
+           <source>Enable telnet server on the specified port</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/terrasync-dir-desc:0" translate="yes">
+           <source>Set target directory for scenery downloads</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/texture-filtering-desc:0" translate="yes">
+           <source>Anisotropic Texture Filtering: values should be 1 (default),2,4,8 or 16</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/time-match-local-desc:0" translate="yes">
+           <source>Synchronize time with local real-world time</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/time-match-real-desc:0" translate="yes">
+           <source>Synchronize time with real-world time</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/time-offset-desc:0" translate="yes">
+           <source>Add this time offset</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/time-options:0" translate="yes">
+           <source>Time Options</source>
+@@ -1235,111 +1235,111 @@
+         </trans-unit>
+         <trans-unit approved="no" id="options/timeofday-desc:0" translate="yes">
+           <source>Specify a time of day</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/trace-read-desc:0" translate="yes">
+           <source>Trace the reads for a property;</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/trace-write-desc:0" translate="yes">
+           <source>Trace the writes for a property;</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/trim-desc:0" translate="yes">
+           <source>Trim the model</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/trim-desc:1" translate="yes">
+           <source>(only with fdm=jsbsim)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/turbulence-desc:0" translate="yes">
+           <source>Specify turbulence from 0.0 (calm) to 1.0 (severe)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/uBody-desc:0" translate="yes">
+           <source>Specify velocity along the body X axis</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/units-feet-desc:0" translate="yes">
+           <source>Use feet for distances</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/units-meters-desc:0" translate="yes">
+           <source>Use meters for distances</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/usage:0" translate="yes">
+           <source>Usage: fgfs [ option ... ]</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/vBody-desc:0" translate="yes">
+           <source>Specify velocity along the body Y axis</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/vDown-desc:0" translate="yes">
+           <source>Specify velocity along a vertical axis</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/vEast-desc:0" translate="yes">
+           <source>Specify velocity along a West-East axis</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/vNorth-desc:0" translate="yes">
+           <source>Specify velocity along a South-North axis</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/vc-desc:0" translate="yes">
+           <source>Specify initial airspeed</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/vehicle-desc:0" translate="yes">
+           <source>Select an vehicle profile as defined by a top level &lt;name&gt;-set.xml</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/verbose-desc:0" translate="yes">
+           <source>Show all command line options when combined with --help or -h</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/verbose-help:0" translate="yes">
+           <source>For a complete list of options use --help --verbose</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/version-desc:0" translate="yes">
+           <source>Display the current FlightGear version</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/view-offset-desc:0" translate="yes">
+           <source>Specify the default forward view direction as an offset from straight ahead. Allowable values are LEFT, RIGHT, CENTER, or a specific number in degrees</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/visibility-desc:0" translate="yes">
+           <source>Specify initial visibility</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/visibility-miles-desc:0" translate="yes">
+           <source>Specify initial visibility in miles</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/vor-desc:0" translate="yes">
+           <source>Specify starting position relative to a VOR</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/vor-freq-desc:0" translate="yes">
+           <source>Specify the frequency of the VOR. Use with --vor=ID</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/wBody-desc:0" translate="yes">
+           <source>Specify velocity along the body Z axis</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/wind-desc:0" translate="yes">
+           <source>Specify wind coming from DIR (degrees) at SPEED (knots)</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="options/wp-desc:0" translate="yes">
+           <source>Specify a waypoint for the GC autopilot;</source>
+-          <target />
++          <target/>
+         </trans-unit>
+       </group>
+       <group resname="sys" restype="x-trolltech-linguist-context">
+@@ -1401,7 +1401,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="sys/navdata-load-percent:0" translate="yes">
+           <source>[VALUE]% complete</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="sys/navdata-loading-airports:0" translate="yes">
+           <source>loading airport data</source>
+@@ -1421,15 +1421,15 @@
+         </trans-unit>
+         <trans-unit approved="no" id="sys/settings-migration-text:0" translate="yes">
+           <source>Saved settings were migrated from a previous version of FlightGear. If you encounter any problems when using the system, try restoring the default settings, before reporting a problem. Saved settings can affect the appearance, performance and features of the simulator.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="sys/settings-migration-title:0" translate="yes">
+           <source>Settings migrated</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="sys/unstable-warning:0" translate="yes">
+           <source>Unstable nightly build - some features may be under active development</source>
+-          <target />
++          <target/>
+         </trans-unit>
+       </group>
+       <group resname="tips" restype="x-trolltech-linguist-context">
+@@ -1451,7 +1451,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="tips/tip:4" translate="yes">
+           <source>Find frequencies of nearby ATC services from the Radios dialog</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="tips/tip:5" translate="yes">
+           <source>Press v to change your viewpoint, Ctrl-V to return to the cockpit</source>
+@@ -1467,7 +1467,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="tips/tip:8" translate="yes">
+           <source>Press h to bring up a Heads Up Display</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="tips/tip:9" translate="yes">
+           <source>Show or hide the menu bar by pressing F10</source>
+@@ -1475,7 +1475,7 @@
+         </trans-unit>
+         <trans-unit approved="no" id="tips/tip:10" translate="yes">
+           <source>Frame-rate too low? - try disabling AI traffic</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="tips/tip:11" translate="yes">
+           <source>Select Environment → Weather to fly in different weather</source>
+@@ -1487,11 +1487,11 @@
+         </trans-unit>
+         <trans-unit approved="no" id="tips/tip:13" translate="yes">
+           <source>Look around by holding down the right mouse button and moving the mouse</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="tips/tip:14" translate="yes">
+           <source>Select Multiplayer → Multiplayer Settings to join the shared flight environment</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="tips/tip:15" translate="yes">
+           <source>Can't get the engine started? - see Help → Aircraft Checklists</source>
+@@ -1513,139 +1513,139 @@
+       <group resname="weather-scenarios" restype="x-trolltech-linguist-context">
+         <trans-unit approved="no" id="weather-scenarios/border-high-pressure-region-desc:0" translate="yes">
+           <source>The border of a high pressure region, in which the airmass becomes unstable and various convective and stratiform clouds may appear.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/border-high-pressure-region-name:0" translate="yes">
+           <source>Border of a high pressure region</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/border-low-pressure-region-desc:0" translate="yes">
+           <source>The border of a low pressure region, in which the airmass is unstable and convective clouds start to form layers and merge into stratiform clouds.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/border-low-pressure-region-name:0" translate="yes">
+           <source>Border of a low pressure region</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/cat-one-minimum-desc:0" translate="yes">
+           <source>If you just got your IFR rating, this is what you are allowed to do. But can you?</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/cat-one-minimum-name:0" translate="yes">
+           <source>CAT I minimum</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/cat-three-b-minimum-desc:0" translate="yes">
+           <source>This is expert level. You will barely see the taxiway from the cockpit, even if you are on ground. Fog and light drizzle, freezing level at 1000ft.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/cat-three-b-minimum-name:0" translate="yes">
+           <source>CAT IIIb minimum</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/cat-two-minimum-desc:0" translate="yes">
+           <source>With just a 1/4 mile visibility and clouds at 100ft, you don't see much of the runway until seconds before touchdown. Trust your instruments to stay alive.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/cat-two-minimum-name:0" translate="yes">
+           <source>CAT II minimum</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/core-high-pressure-region-desc:0" translate="yes">
+           <source>The center of a high pressure region, characterized by descending air and hence only weak cloud development with high visibility.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/core-high-pressure-region-name:0" translate="yes">
+           <source>Core high pressure region</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/core-low-pressure-region-desc:0" translate="yes">
+           <source>The core of a low pressure region, characterized by overcast clouds, bad visibility on the ground and significant rainfall.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/core-low-pressure-region-name:0" translate="yes">
+           <source>Core low pressure region</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/early-morning-fog-desc:0" translate="yes">
+           <source>Fog developed this autumn's morning. Expect good visibility above the layer. However - getting through it can be a challenge. Stay alive for a 500' climb and you'll see the sun!</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/early-morning-fog-name:0" translate="yes">
+           <source>Early morning fog</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/fair-weather-desc:0" translate="yes">
+           <source>A lovely day for trip to your favorite 100$ hamburger airfield</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/fair-weather-name:0" translate="yes">
+           <source>Fair weather</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/high-pressure-region-desc:0" translate="yes">
+           <source>A high pressure region, characterized by moderate to strong Cumulus development in the afternoon and fairly good visibility conditions.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/high-pressure-region-name:0" translate="yes">
+           <source>High pressure region</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/live-data-desc:0" translate="yes">
+           <source>Fetch live weather data for your nearest airport from noaa.gov. You need a working internet connection. Weather is generated automatically, once a valid METAR is received.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/live-data-name:0" translate="yes">
+           <source>Live data</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/low-pressure-region-desc:0" translate="yes">
+           <source>A low pressure region, characterized by rising air, widespread formation of stratiform clouds and beginning rain.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/low-pressure-region-name:0" translate="yes">
+           <source>Low pressure region</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/manual-input-desc:0" translate="yes">
+           <source>Enter your favorite METAR weather. A valid METAR syntax is required.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/manual-input-name:0" translate="yes">
+           <source>Manual input</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/marginal-vfr-desc:0" translate="yes">
+           <source>After the storm - limited visibility and some showers. Go or No-Go?</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/marginal-vfr-name:0" translate="yes">
+           <source>Marginal VFR</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/stormy-monday-desc:0" translate="yes">
+           <source>You're out for an adventure? Gusty winds blowing from the west and isolated thunderstorms should be avoided. Fasten your seatbelt!</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/stormy-monday-name:0" translate="yes">
+           <source>Stormy Monday</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/thunderstorm-desc:0" translate="yes">
+           <source>A hot and damp summer day with thunderstorms developing in the afternoon. Be prepared for reduction of visibility in showers and strong gusts near thunderstorms</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/thunderstorm-name:0" translate="yes">
+           <source>Thunderstorm</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/warm-sector-desc:0" translate="yes">
+           <source>A warm sector, characterized by high moisture in the air and haze extending up to high altitudes, but otherwise largely convective cloud development.</source>
+-          <target />
++          <target/>
+         </trans-unit>
+         <trans-unit approved="no" id="weather-scenarios/warm-sector-name:0" translate="yes">
+           <source>Warm sector</source>
+-          <target />
++          <target/>
+         </trans-unit>
+       </group>
+     </body>
 diff --git a/defaults.xml b/defaults.xml
 index 2f3f8e439..879d7f6c3 100644
 --- a/defaults.xml

@@ -1,10 +1,12 @@
 # FlightGear - PhotoScenery Edition
 
 This project brings support for photoscenery to FlightGear, the free and open-source flight simulator.
-The photoscenery is an overlay, which overrides the traditional scenery textures when available.
-It is fully compatible with Atmospheric Light Scattering, and works with your existing scenery. There is a toggle in the rendering options.
+The photoscenery is an overlay, which overrides the traditional scenery textures when there is a satellite orthophoto available for the current tile.
+It is fully compatible with Atmospheric Light Scattering (as well as the default pipeline), and works with your existing scenery.
 
-This is a work in progress. Currently, orthophotos need to be provided manually in the PNG format (flipped vertically), placed alongside the tile that they correspond to in the `Terrain/` subdirectory of your scenery. For example, tile 991000 already has the files `991000.stg` and `991000.btg.gz`, and you would put `991000.png` alongside them.
+![Traditional vs photoscenery comparison](screenshots/photoscenery-comparison-ksba.png)
+
+This is a work in progress. Currently, you need to provide the satellite orthophotos manually, though I'm working on making it automated, so stay tuned!
 
 ## Getting it
 
@@ -16,14 +18,10 @@ I plan to release prebuilt binaries for Linux, MacOS, and Windows to coincide wi
 1. Clone my patched [SimGear repository](https://github.com/nathanielwarner/simgear) (`git clone https://github.com/nathanielwarner/simgear`), and follow the normal build and install instructions. You may want to set the install prefix so as not to conflict with an existing installation of simgear.
 2. Clone the official FlightGear repository, at the release/2020.2 branch. (`git clone -b release/2020.2 https://git.code.sf.net/p/flightgear/flightgear`). No patch needs to be applied. Follow the normal build instructions, making sure that the base data package and simgear location is set to the patched ones you installed.
 
-## Screenshots
+## Using It
 
-All screenshots are with ALS renderer at max quality, and OpenStreetMap buildings enabled.
+You'll need to have an `Orthophotos/` subdirectory in one of your scenery folders, alongside `Terrain/`, `Buildings/`, etc. You could put it in existing custom scenery packages, or keep your orthophotos in a separate package (for example to use them with TerraSync).
 
-KSBA area, with photoscenery:
+The `Orthophotos/` subdirectory is further split by geographic location to mirror other scenery subdirectories. The orthophotos themselves are named after their tile number. You can determine the tile number you need by using the [latlontotile.py](latlontotile.py) script. For example, to provide photoscenery for tile 991000, you'll provide an orthophoto named `991000.png`. This is a normal PNG file, with the image flipped vertically.
 
-![KSBA photoscenery](screenshots/ksba-photoscenery.png)
-
-Same location, with traditional scenery:
-
-![KSBA traditional scenery](screenshots/ksba-traditional.png)
+Once you have your orthophotos in place, you're all set! You can toggle the photoscenery on and off in the Rendering settings menu in FlightGear.
