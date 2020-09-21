@@ -1,0 +1,391 @@
+diff --git a/simgear/io/sg_binobj.hxx b/simgear/io/sg_binobj.hxx
+index 9a2f4485..64c279a5 100644
+--- a/simgear/io/sg_binobj.hxx
++++ b/simgear/io/sg_binobj.hxx
+@@ -150,6 +150,7 @@ private:
+     std::vector<SGVec4f> colors;        // color list
+     std::vector<SGVec3f> normals;       // normal list
+     std::vector<SGVec2f> texcoords;     // texture coordinate list
++    std::vector<SGVec2f> overlaycoords; // overlay texture coordinate list
+     std::vector<float>   va_flt;        // vertex attribute list (floats)
+     std::vector<int>     va_int;        // vertex attribute list (ints) 
+     
+@@ -226,6 +227,9 @@ public:
+     
+     inline const std::vector<SGVec2f>& get_texcoords() const { return texcoords; }
+     inline void set_texcoords( const std::vector<SGVec2f>& t ) { texcoords = t; }
++
++    inline const std::vector<SGVec2f>& get_overlaycoords() const { return overlaycoords; }
++    inline void set_overlaycoords( const std::vector<SGVec2f>& t ) { overlaycoords = t; }
+     
+     // Points API
+     bool add_point( const SGBinObjectPoint& pt );
+diff --git a/simgear/scene/tgdb/SGTexturedTriangleBin.hxx b/simgear/scene/tgdb/SGTexturedTriangleBin.hxx
+index b39ead0a..90d84f1c 100644
+--- a/simgear/scene/tgdb/SGTexturedTriangleBin.hxx
++++ b/simgear/scene/tgdb/SGTexturedTriangleBin.hxx
+@@ -89,10 +89,14 @@ struct SGVertNormTex {
+   }
+   const SGVec2f& GetTexCoord( unsigned idx ) const { return texCoord[idx]; }
+ 
++  void SetOverlayCoord( const SGVec2f& ovc )  { overlayCoord = ovc; }
++  const SGVec2f& GetOverlayCoord() const { return overlayCoord; }
++
+ private:  
+   SGVec3f vertex;
+   SGVec3f normal;
+   SGVec2f texCoord[4];
++  SGVec2f overlayCoord;
+   
+   unsigned tc_mask;
+ };
+@@ -432,6 +436,7 @@ public:
+     osg::ref_ptr<osg::Vec3Array> normals = new osg::Vec3Array;
+     osg::ref_ptr<osg::Vec2Array> priTexCoords = new osg::Vec2Array;
+     osg::ref_ptr<osg::Vec2Array> secTexCoords = new osg::Vec2Array;
++    osg::ref_ptr<osg::Vec2Array> overlayCoords = new osg::Vec2Array;
+ 
+     osg::ref_ptr<osg::Vec4Array> colors = new osg::Vec4Array;
+     colors->push_back(osg::Vec4(1, 1, 1, 1));
+@@ -453,7 +458,8 @@ public:
+         geometry->setTexCoordArray(1, secTexCoords);
+     } else {
+         geometry->setTexCoordArray(0, priTexCoords);
+-    }        
++    }
++    geometry->setVertexAttribArray(14, overlayCoords.get(), osg::Array::BIND_PER_VERTEX);
+ 
+     const unsigned invalid = ~unsigned(0);
+     std::vector<unsigned> indexMap(getNumVertices(), invalid);
+@@ -469,6 +475,7 @@ public:
+         if ( has_sec_tcs ) {
+             secTexCoords->push_back(toOsg(getVertex(triangle[0]).GetTexCoord(1)));
+         }
++        overlayCoords->push_back(toOsg(getVertex(triangle[0]).GetOverlayCoord()));
+       }
+       deFacade.push_back(indexMap[triangle[0]]);
+ 
+@@ -480,6 +487,7 @@ public:
+         if ( has_sec_tcs ) {
+             secTexCoords->push_back(toOsg(getVertex(triangle[1]).GetTexCoord(1)));
+         }
++        overlayCoords->push_back(toOsg(getVertex(triangle[1]).GetOverlayCoord()));
+       }
+       deFacade.push_back(indexMap[triangle[1]]);
+ 
+@@ -491,6 +499,7 @@ public:
+         if ( has_sec_tcs ) {
+             secTexCoords->push_back(toOsg(getVertex(triangle[2]).GetTexCoord(1)));
+         }
++        overlayCoords->push_back(toOsg(getVertex(triangle[2]).GetOverlayCoord()));
+       }
+       deFacade.push_back(indexMap[triangle[2]]);
+     }
+diff --git a/simgear/scene/tgdb/SGTileGeometryBin.hxx b/simgear/scene/tgdb/SGTileGeometryBin.hxx
+index 409ded6c..540982d6 100644
+--- a/simgear/scene/tgdb/SGTileGeometryBin.hxx
++++ b/simgear/scene/tgdb/SGTileGeometryBin.hxx
+@@ -58,6 +58,7 @@ public:
+     const std::vector<SGVec3d>& vertices(obj.get_wgs84_nodes());
+     const std::vector<SGVec3f>& normals(obj.get_normals());
+     const std::vector<SGVec2f>& texCoords(obj.get_texcoords());
++    const std::vector<SGVec2f>& overlayCoords(obj.get_overlaycoords());
+     const int_list& tris_v(obj.get_tris_v()[grp]);
+     const int_list& tris_n(obj.get_tris_n()[grp]);
+     const tci_list& tris_tc(obj.get_tris_tcs()[grp]);
+@@ -82,6 +83,8 @@ public:
+         if (!tris_tc[1].empty()) {
+             v0.SetTexCoord( 1, getTexCoord(texCoords, tris_tc[1], tc1Scale, i-2) );
+         }
++        v0.SetOverlayCoord(overlayCoords[tris_v[i-2]]);
++
+         SGVertNormTex v1;
+         v1.SetVertex( toVec3f(vertices[tris_v[i-1]]) );
+         v1.SetNormal( num_norms_is_num_verts ? normals[tris_n[i-1]] : 
+@@ -90,6 +93,8 @@ public:
+         if (!tris_tc[1].empty()) {
+             v1.SetTexCoord( 1, getTexCoord(texCoords, tris_tc[1], tc1Scale, i-1) );
+         }
++        v1.SetOverlayCoord(overlayCoords[tris_v[i-1]]);
++
+         SGVertNormTex v2;
+         v2.SetVertex( toVec3f(vertices[tris_v[i]]) );
+         v2.SetNormal( num_norms_is_num_verts ? normals[tris_n[i]] : 
+@@ -98,6 +103,7 @@ public:
+         if (!tris_tc[1].empty()) {
+             v2.SetTexCoord( 1, getTexCoord(texCoords, tris_tc[1], tc1Scale, i) );
+         }
++        v2.SetOverlayCoord(overlayCoords[tris_v[i]]);
+         
+         triangles.insert(v0, v1, v2);
+     }
+@@ -168,6 +174,7 @@ public:
+       const std::vector<SGVec3d>& vertices(obj.get_wgs84_nodes());
+       const std::vector<SGVec3f>& normals(obj.get_normals());
+       const std::vector<SGVec2f>& texCoords(obj.get_texcoords());
++      const std::vector<SGVec2f>& overlayCoords(obj.get_overlaycoords());
+       const int_list& fans_v(obj.get_fans_v()[grp]);
+       const int_list& fans_n(obj.get_fans_n()[grp]);
+       const tci_list& fans_tc(obj.get_fans_tcs()[grp]);
+@@ -191,6 +198,8 @@ public:
+     if (!fans_tc[1].empty()) {
+         v0.SetTexCoord( 1, getTexCoord(texCoords, fans_tc[1], tc1Scale, 0) );
+     }
++    v0.SetOverlayCoord(overlayCoords[fans_v[0]]);
++
+     SGVertNormTex v1;
+     v1.SetVertex( toVec3f(vertices[fans_v[1]]) );
+     v1.SetNormal( num_norms_is_num_verts ? normals[fans_n[1]] : 
+@@ -199,6 +208,8 @@ public:
+     if (!fans_tc[1].empty()) {
+         v1.SetTexCoord( 1, getTexCoord(texCoords, fans_tc[1], tc1Scale, 1) );
+     }
++    v1.SetOverlayCoord(overlayCoords[fans_v[1]]);
++
+     for (unsigned i = 2; i < fans_v.size(); ++i) {
+       SGVertNormTex v2;
+       v2.SetVertex( toVec3f(vertices[fans_v[i]]) );
+@@ -208,6 +219,8 @@ public:
+       if (!fans_tc[1].empty()) {
+           v2.SetTexCoord( 1, getTexCoord(texCoords, fans_tc[1], tc1Scale, i) );
+       }
++      v2.SetOverlayCoord(overlayCoords[fans_v[i]]);
++      
+       triangles.insert(v0, v1, v2);
+       v1 = v2;
+     }
+diff --git a/simgear/scene/tgdb/obj.cxx b/simgear/scene/tgdb/obj.cxx
+index 5d3461f5..2edd6a16 100644
+--- a/simgear/scene/tgdb/obj.cxx
++++ b/simgear/scene/tgdb/obj.cxx
+@@ -26,10 +26,18 @@
+ #  include <simgear_config.h>
+ #endif
+ 
++#include <osgDB/FileNameUtils>
++#include <osgDB/FileUtils>
++#include <osgDB/ReadFile>
++#include <osg/Texture2D>
++#include <osg/TexEnv>
++
+ #include "obj.hxx"
+ 
+ #include <simgear/debug/logstream.hxx>
+ #include <simgear/io/sg_binobj.hxx>
++#include <simgear/bucket/newbucket.hxx>
++#include <simgear/scene/util/OrthophotoManager.hxx>
+ 
+ #include "SGTileGeometryBin.hxx"        // for original tile loading
+ #include "SGTileDetailsCallback.hxx"    // for tile details ( random objects, and lighting )
+@@ -54,6 +62,7 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
+     double maxError    = SG_SIMPLIFIER_MAX_ERROR;
+     double object_range = SG_OBJECT_RANGE_ROUGH;
+     double tile_min_expiry = SG_TILE_MIN_EXPIRY;
++    bool usePhotoscenery = false;
+ 
+     if (options) {
+       matlib = options->getMaterialLib();
+@@ -69,6 +78,7 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
+       maxError = propertyNode->getDoubleValue("/sim/rendering/terrain/simplifier/max-error", maxError);
+       object_range = propertyNode->getDoubleValue("/sim/rendering/static-lod/rough", object_range);
+       tile_min_expiry= propertyNode->getDoubleValue("/sim/rendering/plod-minimum-expiry-time-secs", tile_min_expiry);
++      usePhotoscenery = propertyNode->getBoolValue("/sim/rendering/photoscenery/enabled", usePhotoscenery);
+     }
+ 
+     SGVec3d center = tile.get_gbs_center();
+@@ -76,13 +86,30 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
+     SGQuatd hlOr = SGQuatd::fromLonLat(geodPos)*SGQuatd::fromEulerDeg(0, 0, 180);
+     if (matlib)
+     	matcache = matlib->generateMatCache(geodPos);
++      
++    // Create bucket based on tile name to get the extent
++    long index = strtol(osgDB::getSimpleFileName(osgDB::getNameLessExtension(path)).c_str(), NULL, 10);
++    SGBucket b(index);
++    double lon_min = b.get_center_lon() - 0.5 * b.get_width();
++    double lat_max = b.get_center_lat() + 0.5 * b.get_height();
++
++    // Overlay texture coordinates
++    std::vector<SGVec2f> oc;
+ 
+     // rotate the tiles so that the bounding boxes get nearly axis aligned.
+     // this will help the collision tree's bounding boxes a bit ...
+     std::vector<SGVec3d> nodes = tile.get_wgs84_nodes();
+-    for (unsigned i = 0; i < nodes.size(); ++i)
++    for (unsigned i = 0; i < nodes.size(); ++i) {
++      // Generate TexCoords for Overlay
++      SGGeod node_deg = SGGeod::fromCart(nodes[i] + center);
++      float x = (node_deg.getLongitudeDeg() - lon_min) / b.get_width();
++      float y = (lat_max - node_deg.getLatitudeDeg()) / b.get_height();
++      oc.push_back(SGVec2f(x, y));
++
+       nodes[i] = hlOr.transform(nodes[i]);
++    }
+     tile.set_wgs84_nodes(nodes);
++    tile.set_overlaycoords(oc);
+ 
+     SGQuatf hlOrf(hlOr[0], hlOr[1], hlOr[2], hlOr[3]);
+     std::vector<SGVec3f> normals = tile.get_normals();
+@@ -97,6 +124,34 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
+       return NULL;
+ 
+     osg::Node* node = tileGeometryBin->getSurfaceGeometry(matcache, useVBOs);
++
++    if (node) {
++      // Get base node stateset
++      osg::StateSet *stateSet = node->getOrCreateStateSet();
++
++      osg::ref_ptr<osg::Uniform> orthophotoAvailable = new osg::Uniform("orthophotoAvailable", false);
++      stateSet->addUniform(orthophotoAvailable, osg::StateAttribute::ON);
++
++      if (usePhotoscenery) {
++        // Add satellite texture (if orthophoto exists)
++
++        osg::ref_ptr<osg::Image> orthophoto;
++        OrthophotoManager::instance()->getOrthophoto(index, orthophoto);
++        if (orthophoto) {
++          osg::ref_ptr<osg::Texture2D> orthophotoTexture = new osg::Texture2D(orthophoto);
++          orthophotoTexture->setBorderColor(osg::Vec4(0.0, 0.0, 0.0, 0.0));
++          orthophotoTexture->setWrap(osg::Texture::WrapParameter::WRAP_S, osg::Texture::WrapMode::CLAMP_TO_BORDER);
++          orthophotoTexture->setWrap(osg::Texture::WrapParameter::WRAP_T, osg::Texture::WrapMode::CLAMP_TO_BORDER);
++          orthophotoTexture->setWrap(osg::Texture::WrapParameter::WRAP_R, osg::Texture::WrapMode::CLAMP_TO_BORDER);
++          stateSet->setTextureAttributeAndModes(15, orthophotoTexture, osg::StateAttribute::ON);
++
++          orthophotoAvailable->set(true);
++
++          SG_LOG(SG_TERRAIN, SG_INFO, "  Adding overlay image for index " << index);
++        }
++      }
++    }
++
+     if (node && simplifyDistant) {
+       osgUtil::Simplifier simplifier(ratio, maxError, maxLength);
+       node->accept(simplifier);
+diff --git a/simgear/scene/util/CMakeLists.txt b/simgear/scene/util/CMakeLists.txt
+index 7177f87e..47a02dc3 100644
+--- a/simgear/scene/util/CMakeLists.txt
++++ b/simgear/scene/util/CMakeLists.txt
+@@ -7,6 +7,7 @@ set(HEADERS
+     NodeAndDrawableVisitor.hxx
+     Noise.hxx
+     OptionsReadFileCallback.hxx
++    OrthophotoManager.hxx
+     OsgDebug.hxx
+     OsgMath.hxx
+     OsgSingleton.hxx
+@@ -40,6 +41,7 @@ set(SOURCES
+     NodeAndDrawableVisitor.cxx
+     Noise.cxx
+     OptionsReadFileCallback.cxx
++    OrthophotoManager.cxx
+     OsgDebug.cxx
+     parse_color.cxx
+     PrimitiveUtils.cxx
+diff --git a/simgear/scene/util/OrthophotoManager.cxx b/simgear/scene/util/OrthophotoManager.cxx
+new file mode 100644
+index 00000000..601b72aa
+--- /dev/null
++++ b/simgear/scene/util/OrthophotoManager.cxx
+@@ -0,0 +1,53 @@
++// OrthophotoManager.cxx -- manages satellite orthophotos
++//
++// Copyright (C) 2020  Nathaniel MacArthur-Warner nathanielwarner77@gmail.com
++//
++// This library is free software; you can redistribute it and/or
++// modify it under the terms of the GNU Library General Public
++// License as published by the Free Software Foundation; either
++// version 2 of the License, or (at your option) any later version.
++//
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++// Library General Public License for more details.
++//
++// You should have received a copy of the GNU Library General Public
++// License along with this library; if not, write to the
++// Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++// Boston, MA  02110-1301, USA.
++
++#include "OrthophotoManager.hxx"
++
++namespace simgear {
++    OrthophotoManager* OrthophotoManager::instance() {
++        return SingletonRefPtr<OrthophotoManager>::instance();
++    }
++
++    void OrthophotoManager::addSceneryPath(const SGPath path) {
++        for (SGPath existingPath : sceneryPaths) {
++            if (path == existingPath) {
++                return;
++            }
++        }
++        sceneryPaths.push_front(path);
++    }
++
++    void OrthophotoManager::clearSceneryPaths() {
++        sceneryPaths.clear();
++    }
++
++    void OrthophotoManager::getOrthophoto(long index, osg::ref_ptr<osg::Image>& orthophoto) {
++        SGBucket bucket(index);
++        std::string bucketPath = bucket.gen_base_path();
++
++        for (SGPath sceneryPath : sceneryPaths) {
++            SGPath path = sceneryPath / "Orthophotos" / bucketPath / std::to_string(index);
++            path.concat(".png");
++            if (path.exists()) {
++                orthophoto = osgDB::readRefImageFile(path.str());
++                break;
++            }
++        }
++    }
++}
+diff --git a/simgear/scene/util/OrthophotoManager.hxx b/simgear/scene/util/OrthophotoManager.hxx
+new file mode 100644
+index 00000000..9e7ed8b8
+--- /dev/null
++++ b/simgear/scene/util/OrthophotoManager.hxx
+@@ -0,0 +1,43 @@
++// OrthophotoManager.hxx -- manages satellite orthophotos
++//
++// Copyright (C) 2020  Nathaniel MacArthur-Warner nathanielwarner77@gmail.com
++//
++// This library is free software; you can redistribute it and/or
++// modify it under the terms of the GNU Library General Public
++// License as published by the Free Software Foundation; either
++// version 2 of the License, or (at your option) any later version.
++//
++// This library is distributed in the hope that it will be useful,
++// but WITHOUT ANY WARRANTY; without even the implied warranty of
++// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the GNU
++// Library General Public License for more details.
++//
++// You should have received a copy of the GNU Library General Public
++// License along with this library; if not, write to the
++// Free Software Foundation, Inc., 51 Franklin St, Fifth Floor,
++// Boston, MA  02110-1301, USA.
++
++#ifndef SG_SCENE_ORTHOPHOTO_MANAGER
++#define SG_SCENE_ORTHOPHOTO_MANAGER
++
++#include <osg/Referenced>
++#include <osg/Image>
++#include <osgDB/ReaderWriter>
++#include <osgDB/ReadFile>
++#include <simgear/misc/sg_path.hxx>
++#include <simgear/bucket/newbucket.hxx>
++#include "OsgSingleton.hxx"
++
++namespace simgear {
++    class OrthophotoManager : public osg::Referenced {
++    private:
++        std::deque<SGPath> sceneryPaths;
++    public:
++        static OrthophotoManager* instance();
++        void addSceneryPath(const SGPath path);
++        void clearSceneryPaths();
++        void getOrthophoto(long index, osg::ref_ptr<osg::Image>& orthophoto);
++    };
++}
++
++#endif
+\ No newline at end of file
