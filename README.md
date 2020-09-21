@@ -16,7 +16,7 @@ I plan to release prebuilt binaries for Linux, MacOS, and Windows to coincide wi
 
 1. Clone the official FlightGear base data package at the release/2020.2 branch. (`git clone -b release/2020.2 https://git.code.sf.net/p/flightgear/fgdata`). Apply my patch. ([simgear.patch](simgear.patch) in this repository)
 1. Clone my patched [SimGear repository](https://github.com/nathanielwarner/simgear) (`git clone https://github.com/nathanielwarner/simgear`), and follow the normal build and install instructions. You may want to set the install prefix so as not to conflict with an existing installation of simgear.
-2. Clone the official FlightGear repository, at the release/2020.2 branch. (`git clone -b release/2020.2 https://git.code.sf.net/p/flightgear/flightgear`). No patch needs to be applied. Follow the normal build instructions, making sure that the base data package and simgear location is set to the patched ones you installed.
+2. Clone my patched [FlightGear repository](https://github.com/nathanielwarner/flightgear) (`git clone https://github.com/nathanielwarner/flightgear`), and follow the normal build instructions, making sure that the base data package and simgear location is set to the patched ones you installed.
 
 ## Using It
 
