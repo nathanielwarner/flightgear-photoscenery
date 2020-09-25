@@ -205,6 +205,33 @@ index d88718fb1..874d9ba94 100644
        <depth>
          <function>lequal</function>
      <!--    <write-mask type="bool">false</write-mask> -->
+diff --git a/Effects/terrain-overlay.eff b/Effects/terrain-overlay.eff
+index 9076213b6..ca162679c 100644
+--- a/Effects/terrain-overlay.eff
++++ b/Effects/terrain-overlay.eff
+@@ -158,6 +158,10 @@
+         <fragment-shader>Shaders/hazes.frag</fragment-shader>
+         <fragment-shader>Shaders/secondary_lights.frag</fragment-shader>
+         <fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
++        <attribute>
++          <name>orthophotoTexCoord</name>
++          <index>14</index>
++        </attribute>
+       </program>
+ 	  <uniform>
+         <name>grain_strength</name>
+@@ -663,6 +667,11 @@
+         <value>2</value>
+         <!-- AMBIENT_AND_DIFFUSE -->
+       </uniform>
++      <uniform>
++        <name>orthophotoTexture</name>
++        <type>sampler-2d</type>
++        <value type="int">15</value>
++      </uniform>
+       <depth>
+         <function>lequal</function>
+       </depth>
 diff --git a/Effects/urban.eff b/Effects/urban.eff
 index c2552047a..08fee2073 100644
 --- a/Effects/urban.eff
