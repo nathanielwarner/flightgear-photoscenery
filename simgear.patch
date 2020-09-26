@@ -174,7 +174,7 @@ index 409ded6c..540982d6 100644
        v1 = v2;
      }
 diff --git a/simgear/scene/tgdb/obj.cxx b/simgear/scene/tgdb/obj.cxx
-index 5d3461f5..69466963 100644
+index 5d3461f5..ccd0abc0 100644
 --- a/simgear/scene/tgdb/obj.cxx
 +++ b/simgear/scene/tgdb/obj.cxx
 @@ -26,10 +26,18 @@
@@ -244,7 +244,7 @@ index 5d3461f5..69466963 100644
  
      SGQuatf hlOrf(hlOr[0], hlOr[1], hlOr[2], hlOr[3]);
      std::vector<SGVec3f> normals = tile.get_normals();
-@@ -97,6 +124,33 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
+@@ -97,6 +124,34 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
        return NULL;
  
      osg::Node* node = tileGeometryBin->getSurfaceGeometry(matcache, useVBOs);
@@ -266,6 +266,7 @@ index 5d3461f5..69466963 100644
 +          orthophotoTexture->setWrap(osg::Texture::WrapParameter::WRAP_S, osg::Texture::WrapMode::CLAMP_TO_EDGE);
 +          orthophotoTexture->setWrap(osg::Texture::WrapParameter::WRAP_T, osg::Texture::WrapMode::CLAMP_TO_EDGE);
 +          orthophotoTexture->setWrap(osg::Texture::WrapParameter::WRAP_R, osg::Texture::WrapMode::CLAMP_TO_EDGE);
++          orthophotoTexture->setMaxAnisotropy(SGSceneFeatures::instance()->getTextureFilter());
 +          stateSet->setTextureAttributeAndModes(15, orthophotoTexture, osg::StateAttribute::ON);
 +
 +          orthophotoAvailable->set(true);
