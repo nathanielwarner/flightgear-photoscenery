@@ -4,8 +4,6 @@ This project brings support for photoscenery to FlightGear, the free and open-so
 The photoscenery is an overlay, which overrides the traditional scenery textures when there is a satellite orthophoto available for the current tile.
 It is fully compatible with Atmospheric Light Scattering (as well as the default pipeline), and works with your existing scenery.
 
-Normally, FlightGear uses generic terrain textures. Photoscenery allows you to recognize the terrain, improving your experience when flying with visual flight rules (VFR).
-
 ![Traditional vs photoscenery comparison](screenshots/photoscenery-comparison-ksba.png)
 
 This is a work in progress. Currently, you need to provide the satellite orthophotos manually, though I'm working on making it automated, so stay tuned!
