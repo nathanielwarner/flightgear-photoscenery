@@ -22,33 +22,6 @@ index a5a2c9818..336a42215 100644
              <value type="float">1.0</value>
              <float-property>/sim/rendering/shaders/crop</float-property>
            </less-equal>
-diff --git a/Effects/airfield.eff b/Effects/airfield.eff
-index ea34136ab..241227f3d 100644
---- a/Effects/airfield.eff
-+++ b/Effects/airfield.eff
-@@ -145,6 +145,10 @@
- 	<fragment-shader>Shaders/hazes.frag</fragment-shader>
- 	<fragment-shader>Shaders/secondary_lights.frag</fragment-shader>
-         <fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
-+        <attribute>
-+          <name>orthophotoTexCoord</name>
-+          <index>14</index>
-+        </attribute>
-       </program>
-       <uniform>
-         <name>visibility</name>
-@@ -619,6 +623,11 @@
-         <type>int</type>
-         <value>2</value> <!-- AMBIENT_AND_DIFFUSE -->
-       </uniform>
-+      <uniform>
-+        <name>orthophotoTexture</name>
-+        <type>sampler-2d</type>
-+        <value type="int">15</value>
-+      </uniform>
-       <depth>
-         <function>lequal</function>
-         <write-mask type="bool">false</write-mask>
 diff --git a/Effects/crop.eff b/Effects/crop.eff
 index 5e7d265fa..6eabab455 100644
 --- a/Effects/crop.eff
@@ -90,33 +63,6 @@ index 1405c9eca..1c47fc6be 100644
          <or>
            <less-equal>
              <value type="float">2.0</value>
-diff --git a/Effects/grass.eff b/Effects/grass.eff
-index d01d89ba1..45e92243d 100755
---- a/Effects/grass.eff
-+++ b/Effects/grass.eff
-@@ -142,6 +142,10 @@
- 	<fragment-shader>Shaders/hazes.frag</fragment-shader>
- 	<fragment-shader>Shaders/secondary_lights.frag</fragment-shader>
-         <fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
-+        <attribute>
-+          <name>orthophotoTexCoord</name>
-+          <index>14</index>
-+        </attribute>
-       </program>
-       <uniform>
-         <name>visibility</name>
-@@ -616,6 +620,11 @@
-         <type>int</type>
-         <value>2</value> <!-- AMBIENT_AND_DIFFUSE -->
-       </uniform>
-+      <uniform>
-+        <name>orthophotoTexture</name>
-+        <type>sampler-2d</type>
-+        <value type="int">15</value>
-+      </uniform>
-       <depth>
-         <function>lequal</function>
-         <write-mask type="bool">false</write-mask>
 diff --git a/Effects/landmass.eff b/Effects/landmass.eff
 index 3198ff71f..aea9858e7 100644
 --- a/Effects/landmass.eff
@@ -356,47 +302,6 @@ index c2552047a..08fee2073 100644
  				<less-equal>
  					<value type="float">1.0</value>
  					<float-property>/sim/rendering/shaders/urban</float-property>
-diff --git a/Shaders/airfield-ALS.frag b/Shaders/airfield-ALS.frag
-index 12bdd2e23..5f347a59c 100644
---- a/Shaders/airfield-ALS.frag
-+++ b/Shaders/airfield-ALS.frag
-@@ -9,11 +9,13 @@ varying vec3 relPos;
- varying vec3 worldPos;
- varying vec2 rawPos;
- varying vec3 ecViewdir;
-+varying vec2 orthoTexCoord;
- 
- 
- uniform sampler2D texture;
- uniform sampler2D overlay_texture;
- uniform sampler2D grain_texture;
-+uniform sampler2D orthophotoTexture;
- 
- varying float steepness;
- 
-@@ -54,6 +56,8 @@ uniform int use_searchlight;
- uniform int use_landing_light;
- uniform int use_alt_landing_light;
- 
-+uniform bool orthophotoAvailable;
-+
- const float EarthRadius = 5800000.0;
- const float terminator_width = 200000.0;
- 
-@@ -161,6 +165,13 @@ float noise_2000m = Noise3D(worldPos.xyz, 2000.0);
-     texel = texture2D(texture, gl_TexCoord[0].st * base_layer_magnification); 
-     float local_autumn_factor = texel.a;
- 
-+	if (orthophotoAvailable) {
-+        vec4 sat_texel = texture2D(orthophotoTexture, orthoTexCoord);
-+        if (sat_texel.a > 0) {
-+            texel.rgb = sat_texel.rgb;
-+        }
-+    }
-+
-     float distortion_factor = 1.0;
-     float noise_term;
-     float snow_alpha;
 diff --git a/Shaders/default.frag b/Shaders/default.frag
 index 1c3fbaf84..f7396fa5c 100644
 --- a/Shaders/default.frag
