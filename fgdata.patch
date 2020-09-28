@@ -1,5 +1,5 @@
 diff --git a/Effects/agriculture.eff b/Effects/agriculture.eff
-index a5a2c9818..336a42215 100644
+index a5a2c9818..8db687d16 100644
 --- a/Effects/agriculture.eff
 +++ b/Effects/agriculture.eff
 @@ -153,6 +153,10 @@
@@ -13,15 +13,6 @@ index a5a2c9818..336a42215 100644
          <and>
            <less-equal>
              <value type="float">6.0</value>
-@@ -162,7 +166,7 @@
-             <value type="float">6.0</value>
-             <float-property>/sim/rendering/shaders/transition</float-property>
-           </less-equal>
--		  <less-equal>
-+		      <less-equal>
-             <value type="float">1.0</value>
-             <float-property>/sim/rendering/shaders/crop</float-property>
-           </less-equal>
 diff --git a/Effects/airfield.eff b/Effects/airfield.eff
 index ea34136ab..241227f3d 100644
 --- a/Effects/airfield.eff
@@ -50,31 +41,20 @@ index ea34136ab..241227f3d 100644
          <function>lequal</function>
          <write-mask type="bool">false</write-mask>
 diff --git a/Effects/crop.eff b/Effects/crop.eff
-index 5e7d265fa..6eabab455 100644
+index 5e7d265fa..96d40acc5 100644
 --- a/Effects/crop.eff
 +++ b/Effects/crop.eff
-@@ -23,12 +23,16 @@
-   <technique n="9">
-     <predicate>
+@@ -25,6 +25,10 @@
        <and>
--	    <property>/sim/rendering/shaders/quality-level</property>
-+	      <property>/sim/rendering/shaders/quality-level</property>
+ 	    <property>/sim/rendering/shaders/quality-level</property>
          <property>/sim/rendering/shaders/crop</property>
--		<equal>
--			<value type="float">0.0</value>
--			<float-property>/sim/rendering/rembrandt/enabled</float-property>
--		</equal>
 +        <equal>
 +          <value type="float">0.0</value>
 +          <float-property>/sim/rendering/photoscenery/enabled</float-property>
 +        </equal>
-+        <equal>
-+          <value type="float">0.0</value>
-+          <float-property>/sim/rendering/rembrandt/enabled</float-property>
-+        </equal>
-         <or>
-           <less-equal>
-             <value type="float">2.0</value>
+ 		<equal>
+ 			<value type="float">0.0</value>
+ 			<float-property>/sim/rendering/rembrandt/enabled</float-property>
 diff --git a/Effects/forest.eff b/Effects/forest.eff
 index 1405c9eca..1c47fc6be 100644
 --- a/Effects/forest.eff
@@ -144,7 +124,7 @@ index 3198ff71f..aea9858e7 100644
  					<less-equal>
  						<value type="float">2.0</value>
 diff --git a/Effects/terrain-default.eff b/Effects/terrain-default.eff
-index d88718fb1..874d9ba94 100644
+index d88718fb1..6a1ae47cd 100644
 --- a/Effects/terrain-default.eff
 +++ b/Effects/terrain-default.eff
 @@ -320,6 +320,10 @@
@@ -193,14 +173,10 @@ index d88718fb1..874d9ba94 100644
        <depth>
          <function>lequal</function>
          <!--><write-mask type="bool">false</write-mask> -->
-@@ -1224,8 +1242,12 @@
-         <vertex-shader>Shaders/generic-ALS-base.vert</vertex-shader>
-         <fragment-shader>Shaders/terrain-ALS-base.frag</fragment-shader>
+@@ -1226,6 +1244,10 @@
          <fragment-shader>Shaders/hazes.frag</fragment-shader>
--	<fragment-shader>Shaders/noise.frag</fragment-shader>
--	<fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
-+	      <fragment-shader>Shaders/noise.frag</fragment-shader>
-+	      <fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
+ 	<fragment-shader>Shaders/noise.frag</fragment-shader>
+ 	<fragment-shader>Shaders/filters-ALS.frag</fragment-shader>
 +        <attribute>
 +          <name>orthophotoTexCoord</name>
 +          <index>14</index>
@@ -742,17 +718,15 @@ index c3dcf9f28..8de433328 100644
      //nvec = (gl_NormalMatrix * gl_Normal).xy;
      vec4 ambient_color, diffuse_color;
 diff --git a/defaults.xml b/defaults.xml
-index 2f3f8e439..879d7f6c3 100644
+index 2f3f8e439..b42849c54 100644
 --- a/defaults.xml
 +++ b/defaults.xml
-@@ -132,6 +132,11 @@ Started September 2000 by David Megginson, david@megginson.com
+@@ -132,6 +132,9 @@ Started September 2000 by David Megginson, david@megginson.com
            </lighting>
          </debug>
        </rembrandt>
 +      <photoscenery>
-+        <enabled type="bool" userarchive="y">true</enabled>
-+        <pixels-per-meter type="float" userarchive="y">0.25</pixels-per-meter>
-+        <auto-download type="bool" userarchive="y">true</auto-download>
++        <enabled type="bool" userarchive="y">false</enabled>
 +      </photoscenery>
        <debug type="bool">false</debug>
        <realism type="int">5</realism>
