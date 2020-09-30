@@ -155,7 +155,7 @@ index 409ded6c..540982d6 100644
        v1 = v2;
      }
 diff --git a/simgear/scene/tgdb/obj.cxx b/simgear/scene/tgdb/obj.cxx
-index 5d3461f5..467af055 100644
+index 5d3461f5..81d41676 100644
 --- a/simgear/scene/tgdb/obj.cxx
 +++ b/simgear/scene/tgdb/obj.cxx
 @@ -26,10 +26,18 @@
@@ -193,7 +193,7 @@ index 5d3461f5..467af055 100644
      }
  
      SGVec3d center = tile.get_gbs_center();
-@@ -77,12 +87,40 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
+@@ -77,12 +87,39 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
      if (matlib)
      	matcache = matlib->generateMatCache(geodPos);
  
@@ -222,9 +222,8 @@ index 5d3461f5..467af055 100644
 +        // Generate TexCoords for Overlay
 +        const SGGeod node_geod = SGGeod::fromCart(nodes[i] + center);
 +        const OrthophotoBounds actual_bbox = orthophoto->getBbox();
-+        const float x = (node_geod.getLongitudeDeg() - actual_bbox.getMinLon()) / actual_bbox.getWidth();
-+        const float y = (actual_bbox.getMaxLat() - node_geod.getLatitudeDeg()) / actual_bbox.getHeight();
-+        satellite_overlay_coords.push_back(SGVec2f(x, y));
++        const SGVec2f coords = actual_bbox.getTexCoord(node_geod);
++        satellite_overlay_coords.push_back(coords);
 +      } else {
 +        satellite_overlay_coords.push_back(SGVec2f(0.0, 0.0));
 +      }
@@ -236,7 +235,7 @@ index 5d3461f5..467af055 100644
  
      SGQuatf hlOrf(hlOr[0], hlOr[1], hlOr[2], hlOr[3]);
      std::vector<SGVec3f> normals = tile.get_normals();
-@@ -97,6 +135,23 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
+@@ -97,6 +134,23 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
        return NULL;
  
      osg::Node* node = tileGeometryBin->getSurfaceGeometry(matcache, useVBOs);
@@ -282,10 +281,10 @@ index 7177f87e..47a02dc3 100644
      PrimitiveUtils.cxx
 diff --git a/simgear/scene/util/OrthophotoManager.cxx b/simgear/scene/util/OrthophotoManager.cxx
 new file mode 100644
-index 00000000..e0288caa
+index 00000000..94a16a0a
 --- /dev/null
 +++ b/simgear/scene/util/OrthophotoManager.cxx
-@@ -0,0 +1,177 @@
+@@ -0,0 +1,329 @@
 +// OrthophotoManager.cxx -- manages satellite orthophotos
 +//
 +// Copyright (C) 2020  Nathaniel MacArthur-Warner nathanielwarner77@gmail.com
@@ -308,21 +307,173 @@ index 00000000..e0288caa
 +#include "OrthophotoManager.hxx"
 +
 +namespace simgear {
++
++    void OrthophotoBounds::_updateHemisphere() {
++        if (_minPosLon <= 180 && _maxPosLon >= 0 && _minNegLon < 0 && _maxNegLon >= -180) {
++            // We have negative and positive longitudes.
++            // Choose whether we're straddling the Prime Meridian or 180th meridian
++            // based on which produces a smaller bounding box.
++            if (_maxPosLon - _minNegLon <= _maxNegLon - _minPosLon) {
++                _hemisphere = StraddlingPm;
++            } else {
++                _hemisphere = StraddlingIdl;
++            }
++        }
++        else if (_minPosLon <= 180.0 && _maxPosLon >= 0.0) {
++            _hemisphere = Eastern;
++        }
++        else if (_minNegLon < 0.0 && _maxNegLon >= -180.0) {
++            _hemisphere = Western;
++        }
++        else {
++            _hemisphere = Invalid;
++        }
++    }
++
++    double OrthophotoBounds::getWidth() const {
++        switch (_hemisphere) {
++            case Eastern:
++                return _maxPosLon - _minPosLon;
++            case Western:
++                return _maxNegLon - _minNegLon;
++            case StraddlingPm:
++                return _maxPosLon - _minNegLon;
++            case StraddlingIdl:
++                return (180.0 - _minPosLon) + (_maxNegLon + 180.0);
++            default:
++                SG_LOG(SG_TERRAIN, SG_ALERT, "OrthophotoBounds::getWidth: My data is invalid. Returning 0.");
++                return 0.0;
++        }
++    }
++
++    double OrthophotoBounds::getHeight() const {
++        return _maxLat - _minLat;
++    }
++
++    SGVec2f OrthophotoBounds::getTexCoord(const SGGeod& geod) const {
++        
++        const double lon = geod.getLongitudeDeg();
++        const double width = getWidth();
++        float x = 0.0;
++
++        switch (_hemisphere) {
++            case Eastern:
++                x = (lon - _minPosLon) / width;
++                break;
++            case Western:
++                x = (lon - _minNegLon) / width;
++                break;
++            case StraddlingPm:
++                x = (lon - _minNegLon) / width;
++                break;
++            case StraddlingIdl:
++                if (lon >= 0) {
++                    // Geod is in the eastern hemisphere
++                    x = (lon - _minPosLon) / width;
++                } else {
++                    // Geod is in the western hemisphere
++                    x = (180.0 - _minPosLon + lon) / width;
++                }
++                break;
++            default:
++                SG_LOG(SG_TERRAIN, SG_ALERT, "OrthophotoBounds::getTexCoord: My data is invalid.");
++                break;
++        }
++
++        const float y = (_maxLat - geod.getLatitudeDeg()) / getHeight();
++
++        return SGVec2f(x, y);
++    }
++
++    double OrthophotoBounds::getLonOffset(const OrthophotoBounds& other) const {
++        
++        std::string error_message = "";
++
++        switch (_hemisphere) {
++            case Eastern:
++                if (other._hemisphere == Eastern)
++                    return other._minPosLon - _minPosLon; 
++                else
++                    error_message = "I'm not in the same hemisphere as other.";
++                break;
++            case Western:
++                if (other._hemisphere == Western)
++                    return other._minNegLon - _minNegLon;
++                else
++                    error_message = "I'm not in the same hemisphere as other.";
++                break;
++            case StraddlingPm:
++                if (other._hemisphere == Western || other._hemisphere == StraddlingPm)
++                    return other._minNegLon - _minNegLon;
++                else if (other._hemisphere == Eastern)
++                    return -_minNegLon + other._minPosLon;
++                else
++                    error_message = "I'm not in the same hemisphere as other";
++                break;
++            case StraddlingIdl:
++                if (other._hemisphere == Eastern || other._hemisphere == StraddlingIdl) {
++                    return other._minPosLon - _minPosLon;
++                } else if (other._hemisphere == StraddlingIdl) {
++                    return (180.0 - _minPosLon) + (other._minNegLon + 180.0);
++                } else {
++                    error_message = "Other has invalid data.";
++                }
++                break;
++            default:
++                error_message = "My data is invalid.";
++                break;
++        }
++
++        SG_LOG(SG_TERRAIN, SG_ALERT, "OrthophotoBounds::getLonOffset: " << error_message << " Returning 0.");
++        return 0.0;
++    }
++
++    double OrthophotoBounds::getLatOffset(const OrthophotoBounds& other) const {
++        return _maxLat - other._maxLat;
++    }
 +    
 +    void OrthophotoBounds::expandToInclude(const double lon, const double lat) {
-+        if (lon < minLon)
-+            minLon = lon;
-+        if (lon > maxLon)
-+            maxLon = lon;
-+        if (lat < minLat)
-+            minLat = lat;
-+        if (lat > maxLat)
-+            maxLat = lat;
++        if (lon >= 0) {
++            if (lon < _minPosLon)
++                _minPosLon = lon;
++            if (lon > _maxPosLon)
++                _maxPosLon = lon;
++        } else {
++            if (lon < _minNegLon)
++                _minNegLon = lon;
++            if (lon > _maxNegLon)
++                _maxNegLon = lon;
++        }
++
++        if (lat < _minLat)
++            _minLat = lat;
++        if (lat > _maxLat)
++            _maxLat = lat;
++
++        _updateHemisphere();
 +    }
 +
 +    void OrthophotoBounds::absorb(const OrthophotoBounds& bounds) {
-+        expandToInclude(bounds.minLon, bounds.minLat);
-+        expandToInclude(bounds.maxLon, bounds.maxLat);
++        switch (bounds._hemisphere) {
++            case Eastern:
++                expandToInclude(bounds._minPosLon, bounds._minLat);
++                expandToInclude(bounds._maxPosLon, bounds._maxLat);
++                break;
++            case Western:
++                expandToInclude(bounds._minNegLon, bounds._minLat);
++                expandToInclude(bounds._maxNegLon, bounds._maxLat);
++                break;
++            case StraddlingPm:
++                expandToInclude(bounds._minNegLon, bounds._minLat);
++                expandToInclude(bounds._maxPosLon, bounds._maxLat);
++            case StraddlingIdl:
++                expandToInclude(bounds._minPosLon, bounds._minLat);
++                expandToInclude(bounds._maxNegLon, bounds._maxLat);
++                break;
++            case Invalid:
++                SG_LOG(SG_TERRAIN, SG_ALERT, "OrthophotoBounds::absorb: Data in bounds to absorb is invalid. Aborting.");
++                break;
++        }
 +    }
 +
 +    Orthophoto::Orthophoto(const ImageRef& image, const OrthophotoBounds& bbox) {
@@ -357,8 +508,8 @@ index 00000000..e0288caa
 +            const int width = degs_to_pixels * bounds.getWidth();
 +            const int height = degs_to_pixels * bounds.getHeight();
 +            sub_image->scaleImage(width, height, depth);
-+            const int s_offset = degs_to_pixels * (bounds.getMinLon() - _bbox.getMinLon());
-+            const int t_offset = degs_to_pixels * (_bbox.getMaxLat() - bounds.getMaxLat());
++            const int s_offset = degs_to_pixels * _bbox.getLonOffset(bounds);
++            const int t_offset = degs_to_pixels * _bbox.getLatOffset(bounds);
 +            
 +            _image->copySubImage(s_offset, t_offset, 0, sub_image);
 +        }
@@ -465,10 +616,10 @@ index 00000000..e0288caa
 +}
 diff --git a/simgear/scene/util/OrthophotoManager.hxx b/simgear/scene/util/OrthophotoManager.hxx
 new file mode 100644
-index 00000000..87232d8a
+index 00000000..e3c667f3
 --- /dev/null
 +++ b/simgear/scene/util/OrthophotoManager.hxx
-@@ -0,0 +1,88 @@
+@@ -0,0 +1,93 @@
 +// OrthophotoManager.hxx -- manages satellite orthophotos
 +//
 +// Copyright (C) 2020  Nathaniel MacArthur-Warner nathanielwarner77@gmail.com
@@ -500,6 +651,8 @@ index 00000000..87232d8a
 +#include <osgDB/ReadFile>
 +#include <simgear/misc/sg_path.hxx>
 +#include <simgear/bucket/newbucket.hxx>
++#include <simgear/debug/logstream.hxx>
++#include <simgear/math/SGLimits.hxx>
 +#include "SGSceneFeatures.hxx"
 +#include "OsgSingleton.hxx"
 +
@@ -511,21 +664,24 @@ index 00000000..87232d8a
 +
 +    class OrthophotoBounds {
 +    private:
-+        double minLon = 180.0;
-+        double maxLon = -180.0;
-+        double minLat = 90.0;
-+        double maxLat = -90.0;
++        double _minNegLon = SGLimitsd::max();
++        double _minPosLon = SGLimitsd::max();
++        double _maxNegLon = SGLimitsd::lowest();
++        double _maxPosLon = SGLimitsd::lowest();
++        double _minLat = SGLimitsd::max();
++        double _maxLat = SGLimitsd::lowest();
++
++        enum Hemisphere {Eastern, Western, StraddlingPm, StraddlingIdl, Invalid} _hemisphere = Invalid;
++        void _updateHemisphere();
 +
 +    public:
 +        static OrthophotoBounds fromBucket(const SGBucket& bucket);
 +
-+        double getMinLon() const { return minLon; }
-+        double getMaxLon() const { return maxLon; }
-+        double getMinLat() const { return minLat; }
-+        double getMaxLat() const { return maxLat; }
-+
-+        double getWidth() const { return maxLon - minLon; }
-+        double getHeight() const { return maxLat - minLat; }
++        double getWidth() const;
++        double getHeight() const;
++        SGVec2f getTexCoord(const SGGeod& geod) const;
++        double getLonOffset(const OrthophotoBounds& other) const;
++        double getLatOffset(const OrthophotoBounds& other) const;
 +
 +        void expandToInclude(const double lon, const double lat);
 +        void absorb(const OrthophotoBounds& bounds);
