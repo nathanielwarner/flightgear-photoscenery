@@ -155,7 +155,7 @@ index 409ded6c..540982d6 100644
        v1 = v2;
      }
 diff --git a/simgear/scene/tgdb/obj.cxx b/simgear/scene/tgdb/obj.cxx
-index 5d3461f5..ea008dcd 100644
+index 5d3461f5..467af055 100644
 --- a/simgear/scene/tgdb/obj.cxx
 +++ b/simgear/scene/tgdb/obj.cxx
 @@ -26,10 +26,18 @@
@@ -193,7 +193,7 @@ index 5d3461f5..ea008dcd 100644
      }
  
      SGVec3d center = tile.get_gbs_center();
-@@ -77,12 +87,53 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
+@@ -77,12 +87,40 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
      if (matlib)
      	matcache = matlib->generateMatCache(geodPos);
  
@@ -208,20 +208,7 @@ index 5d3461f5..ea008dcd 100644
 +        const SGBucket bucket(index);
 +        orthophoto = OrthophotoManager::instance()->getOrthophoto(bucket);
 +      } else {
-+        // Find the orthophoto by bounding box
-+
-+        OrthophotoBounds desired_bbox;
-+        
-+        // Find min/max lon/lat by brute force
-+        for (const auto& node : nodes) {
-+          const SGGeod node_geod = SGGeod::fromCart(node + center);
-+          const double lon_deg = node_geod.getLongitudeDeg();
-+          const double lat_deg = node_geod.getLatitudeDeg();
-+
-+          desired_bbox.expandToInclude(lon_deg, lat_deg);
-+        }
-+
-+        orthophoto = OrthophotoManager::instance()->getOrthophoto(desired_bbox);
++        orthophoto = OrthophotoManager::instance()->getOrthophoto(nodes, center);
 +      }
 +    }
 +    
@@ -235,8 +222,8 @@ index 5d3461f5..ea008dcd 100644
 +        // Generate TexCoords for Overlay
 +        const SGGeod node_geod = SGGeod::fromCart(nodes[i] + center);
 +        const OrthophotoBounds actual_bbox = orthophoto->getBbox();
-+        const float x = (node_geod.getLongitudeDeg() - actual_bbox.minLon) / (actual_bbox.maxLon - actual_bbox.minLon);
-+        const float y = (actual_bbox.maxLat - node_geod.getLatitudeDeg()) / (actual_bbox.maxLat - actual_bbox.minLat);
++        const float x = (node_geod.getLongitudeDeg() - actual_bbox.getMinLon()) / actual_bbox.getWidth();
++        const float y = (actual_bbox.getMaxLat() - node_geod.getLatitudeDeg()) / actual_bbox.getHeight();
 +        satellite_overlay_coords.push_back(SGVec2f(x, y));
 +      } else {
 +        satellite_overlay_coords.push_back(SGVec2f(0.0, 0.0));
@@ -249,7 +236,7 @@ index 5d3461f5..ea008dcd 100644
  
      SGQuatf hlOrf(hlOr[0], hlOr[1], hlOr[2], hlOr[3]);
      std::vector<SGVec3f> normals = tile.get_normals();
-@@ -97,6 +148,23 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
+@@ -97,6 +135,23 @@ SGLoadBTG(const std::string& path, const simgear::SGReaderWriterOptions* options
        return NULL;
  
      osg::Node* node = tileGeometryBin->getSurfaceGeometry(matcache, useVBOs);
@@ -295,10 +282,10 @@ index 7177f87e..47a02dc3 100644
      PrimitiveUtils.cxx
 diff --git a/simgear/scene/util/OrthophotoManager.cxx b/simgear/scene/util/OrthophotoManager.cxx
 new file mode 100644
-index 00000000..7e1aaeec
+index 00000000..e0288caa
 --- /dev/null
 +++ b/simgear/scene/util/OrthophotoManager.cxx
-@@ -0,0 +1,215 @@
+@@ -0,0 +1,177 @@
 +// OrthophotoManager.cxx -- manages satellite orthophotos
 +//
 +// Copyright (C) 2020  Nathaniel MacArthur-Warner nathanielwarner77@gmail.com
@@ -321,13 +308,6 @@ index 00000000..7e1aaeec
 +#include "OrthophotoManager.hxx"
 +
 +namespace simgear {
-+
-+    OrthophotoBounds::OrthophotoBounds() {
-+        minLon = 180.0;
-+        maxLon = -180.0;
-+        minLat = 90.0;
-+        maxLat = -90.0;
-+    }
 +    
 +    void OrthophotoBounds::expandToInclude(const double lon, const double lat) {
 +        if (lon < minLon)
@@ -340,46 +320,57 @@ index 00000000..7e1aaeec
 +            maxLat = lat;
 +    }
 +
-+    Orthophoto::Orthophoto(const ImageRef& image, const OrthophotoBounds& bbox) {
-+        init(image, bbox);
++    void OrthophotoBounds::absorb(const OrthophotoBounds& bounds) {
++        expandToInclude(bounds.minLon, bounds.minLat);
++        expandToInclude(bounds.maxLon, bounds.maxLat);
 +    }
 +
-+    Orthophoto::Orthophoto(ImageRefCollection2d& images, const OrthophotoBounds& bbox) {
-+        ImageRef& bottom_left_image = images[0][0];
-+        int bk_height = images.size();
-+        int bk_width = images[0].size();
-+        int single_height = bottom_left_image->t();
-+        int single_width = bottom_left_image->s();
-+        int px_width = bk_width * single_width;
-+        int px_height = bk_height * single_height;
-+        int px_depth = bottom_left_image->r();
-+        GLenum pixel_format = bottom_left_image->getPixelFormat();
-+        GLenum data_type = bottom_left_image->getDataType();
-+        int packing = bottom_left_image->getPacking();
++    Orthophoto::Orthophoto(const ImageRef& image, const OrthophotoBounds& bbox) {
++        _image = image;
++        _bbox = bbox;
++    }
 +
-+        ImageRef image = new osg::Image();
-+        image->allocateImage(px_width, px_height, px_depth, pixel_format, data_type, packing);
-+
-+        for (unsigned int vertical = 0; vertical < images.size(); vertical++) {
-+            for (unsigned int horiz = 0; horiz < images[vertical].size(); horiz++) {
-+                ImageRef& single_image = images[vertical][horiz];
-+                if (single_image) {
-+                    single_image->scaleImage(single_width, single_height, bottom_left_image->r());
-+                    image->copySubImage(horiz * single_width, (bk_height - 1 - vertical) * single_height, 0, single_image);
-+                }
-+            }
++    Orthophoto::Orthophoto(const std::vector<osg::ref_ptr<Orthophoto>>& orthophotos) {
++        for (const auto& orthophoto : orthophotos) {
++            _bbox.absorb(orthophoto->getBbox());
 +        }
 +
-+        init(image, bbox);
++        const osg::ref_ptr<Orthophoto>& some_orthophoto = orthophotos[0];
++        const ImageRef& some_image = some_orthophoto->_image;
++        const OrthophotoBounds& some_bbox = some_orthophoto->getBbox();
++        const double degs_to_pixels = some_image->s() / some_bbox.getWidth();
++        
++        const int total_width = degs_to_pixels * _bbox.getWidth();
++        const int total_height = degs_to_pixels * _bbox.getHeight();
++
++        const int depth = some_image->r();
++        GLenum pixel_format = some_image->getPixelFormat();
++        GLenum data_type = some_image->getDataType();
++        int packing = some_image->getPacking();
++
++        _image = new osg::Image();
++        _image->allocateImage(total_width, total_height, depth, pixel_format, data_type, packing);
++
++        for (const auto& orthophoto : orthophotos) {
++            ImageRef sub_image = orthophoto->_image;
++            const OrthophotoBounds& bounds = orthophoto->getBbox();
++            const int width = degs_to_pixels * bounds.getWidth();
++            const int height = degs_to_pixels * bounds.getHeight();
++            sub_image->scaleImage(width, height, depth);
++            const int s_offset = degs_to_pixels * (bounds.getMinLon() - _bbox.getMinLon());
++            const int t_offset = degs_to_pixels * (_bbox.getMaxLat() - bounds.getMaxLat());
++            
++            _image->copySubImage(s_offset, t_offset, 0, sub_image);
++        }
 +    }
 +
-+    void Orthophoto::init(const ImageRef& image, const OrthophotoBounds& bbox) {
-+        _texture = new osg::Texture2D(image);
-+        _texture->setWrap(osg::Texture::WrapParameter::WRAP_S, osg::Texture::WrapMode::CLAMP_TO_EDGE);
-+        _texture->setWrap(osg::Texture::WrapParameter::WRAP_T, osg::Texture::WrapMode::CLAMP_TO_EDGE);
-+        _texture->setWrap(osg::Texture::WrapParameter::WRAP_R, osg::Texture::WrapMode::CLAMP_TO_EDGE);
-+        _texture->setMaxAnisotropy(SGSceneFeatures::instance()->getTextureFilter());
-+        _bbox = bbox;
++    osg::ref_ptr<osg::Texture2D> Orthophoto::getTexture() {
++        osg::ref_ptr<osg::Texture2D> texture = new osg::Texture2D(_image);
++        texture->setWrap(osg::Texture::WrapParameter::WRAP_S, osg::Texture::WrapMode::CLAMP_TO_EDGE);
++        texture->setWrap(osg::Texture::WrapParameter::WRAP_T, osg::Texture::WrapMode::CLAMP_TO_EDGE);
++        texture->setWrap(osg::Texture::WrapParameter::WRAP_R, osg::Texture::WrapMode::CLAMP_TO_EDGE);
++        texture->setMaxAnisotropy(SGSceneFeatures::instance()->getTextureFilter());
++        return texture;
 +    }
 +
 +    OrthophotoManager* OrthophotoManager::instance() {
@@ -447,79 +438,37 @@ index 00000000..7e1aaeec
 +        return new Orthophoto(image, bbox);
 +    }
 +
-+    osg::ref_ptr<Orthophoto> OrthophotoManager::getOrthophoto(OrthophotoBounds desired_bbox) {
++    osg::ref_ptr<Orthophoto> OrthophotoManager::getOrthophoto(const std::vector<SGVec3d>& nodes, const SGVec3d& center) {
 +        
-+        double eps = SG_EPSILON * SGD_RADIANS_TO_DEGREES;
-+        desired_bbox.minLon += eps;
-+        desired_bbox.minLat += eps;
-+        desired_bbox.maxLon -= eps;
-+        desired_bbox.maxLat -= eps;
++        std::unordered_map<long, bool> orthophotos_attempted;
++        std::vector<osg::ref_ptr<Orthophoto>> orthophotos;
 +
-+        SGBucket bottom_left_bucket(SGGeod::fromDeg(desired_bbox.minLon, desired_bbox.minLat));
-+        const double bucket_width = bottom_left_bucket.get_width();
-+        ImageRef bottom_left_image = getBucketImage(bottom_left_bucket);
++        for (const auto& node : nodes) {
++            const SGGeod node_geod = SGGeod::fromCart(node + center);
++            const SGBucket bucket(node_geod);
++            bool& orthophoto_attempted = orthophotos_attempted[bucket.gen_index()];
++            if (!orthophoto_attempted) {
++                osg::ref_ptr<Orthophoto> orthophoto = getOrthophoto(bucket);
++                if (orthophoto) {
++                    orthophotos.push_back(orthophoto);
++                }
++                orthophoto_attempted = true;
++            }
++        }
 +
-+        if (!bottom_left_image)
++        if (orthophotos.size() == 0) {
 +            return nullptr;
-+        
-+        OrthophotoBounds actual_bbox;
-+        augmentBoundingBox(actual_bbox, bottom_left_bucket);
-+
-+        // Simplest case - we already have the full orthophoto
-+        if (actual_bbox.maxLon > desired_bbox.maxLon && actual_bbox.maxLat > desired_bbox.maxLat)
-+            return new Orthophoto(bottom_left_image, actual_bbox);
-+        
-+
-+        // More complex case - we create a composite orthophoto
-+
-+
-+        int bk_width = 1;
-+        int bk_height = 1;
-+
-+        ImageRefCollection2d images;
-+        
-+        ImageRefVec first_row_images;
-+        first_row_images.push_back(bottom_left_image);
-+        SGBucket current_bucket = bottom_left_bucket;
-+        while (actual_bbox.maxLon < desired_bbox.maxLon) {
-+            current_bucket = current_bucket.sibling(1, 0);
-+            ImageRef new_image = getBucketImage(current_bucket);
-+            first_row_images.push_back(new_image);
-+            augmentBoundingBox(actual_bbox, current_bucket);
-+            bk_width++;
-+        }
-+        images.push_back(first_row_images);
-+
-+        current_bucket = bottom_left_bucket;
-+        while (actual_bbox.maxLat < desired_bbox.maxLat) {
-+            ImageRefVec row_images;
-+            current_bucket = current_bucket.sibling(0, 1);
-+
-+            if (current_bucket.get_width() != bucket_width) {
-+                // We've crossed into territory that has different tile spans!
-+                // Currently, we don't handle this situation.
-+                return nullptr;
-+            }
-+
-+            for (int i = 0; i < bk_width; i++) {
-+                SGBucket new_bucket = current_bucket.sibling(i, 0);
-+                ImageRef new_image = getBucketImage(new_bucket);
-+                row_images.push_back(new_image);
-+            }
-+            images.push_back(row_images);
-+            augmentBoundingBox(actual_bbox, current_bucket);
-+            bk_height++;
 +        }
 +
-+        return new Orthophoto(images, actual_bbox);
++        return new Orthophoto(orthophotos);
 +    }
 +}
 diff --git a/simgear/scene/util/OrthophotoManager.hxx b/simgear/scene/util/OrthophotoManager.hxx
 new file mode 100644
-index 00000000..d502fe7a
+index 00000000..87232d8a
 --- /dev/null
 +++ b/simgear/scene/util/OrthophotoManager.hxx
-@@ -0,0 +1,79 @@
+@@ -0,0 +1,88 @@
 +// OrthophotoManager.hxx -- manages satellite orthophotos
 +//
 +// Copyright (C) 2020  Nathaniel MacArthur-Warner nathanielwarner77@gmail.com
@@ -560,27 +509,36 @@ index 00000000..d502fe7a
 +    using ImageRefVec = std::vector<ImageRef>;
 +    using ImageRefCollection2d = std::vector<ImageRefVec>;
 +
-+    struct OrthophotoBounds {
-+        double minLon;
-+        double maxLon;
-+        double minLat;
-+        double maxLat;
++    class OrthophotoBounds {
++    private:
++        double minLon = 180.0;
++        double maxLon = -180.0;
++        double minLat = 90.0;
++        double maxLat = -90.0;
 +
++    public:
 +        static OrthophotoBounds fromBucket(const SGBucket& bucket);
 +
-+        OrthophotoBounds();
++        double getMinLon() const { return minLon; }
++        double getMaxLon() const { return maxLon; }
++        double getMinLat() const { return minLat; }
++        double getMaxLat() const { return maxLat; }
++
++        double getWidth() const { return maxLon - minLon; }
++        double getHeight() const { return maxLat - minLat; }
++
 +        void expandToInclude(const double lon, const double lat);
++        void absorb(const OrthophotoBounds& bounds);
 +    };
 +
 +    class Orthophoto : public osg::Referenced {
 +    private:
-+        osg::ref_ptr<osg::Texture2D> _texture;
++        ImageRef _image;
 +        OrthophotoBounds _bbox;
-+        void init(const ImageRef& image, const OrthophotoBounds& bbox);
 +    public:
 +        Orthophoto(const ImageRef& image, const OrthophotoBounds& bbox);
-+        Orthophoto(ImageRefCollection2d& images, const OrthophotoBounds& bbox);
-+        osg::ref_ptr<osg::Texture2D> getTexture() const { return _texture; };
++        Orthophoto(const std::vector<osg::ref_ptr<Orthophoto>>& orthophotos);
++        osg::ref_ptr<osg::Texture2D> getTexture();
 +        OrthophotoBounds getBbox() const { return _bbox; };
 +    };
 +
@@ -594,7 +552,7 @@ index 00000000..d502fe7a
 +        void addSceneryPath(const SGPath& path);
 +        void clearSceneryPaths();
 +        osg::ref_ptr<Orthophoto> getOrthophoto(const SGBucket& bucket);
-+        osg::ref_ptr<Orthophoto> getOrthophoto(OrthophotoBounds desired_bbox);
++        osg::ref_ptr<Orthophoto> getOrthophoto(const std::vector<SGVec3d>& nodes, const SGVec3d& center);
 +    };
 +}
 +
