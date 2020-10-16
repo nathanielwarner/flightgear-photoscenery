@@ -21,28 +21,32 @@ index 39e7e44bd..40a4ce421 100644
  
          if (mb.result() == QMessageBox::No) {
 diff --git a/src/Scenery/tileentry.cxx b/src/Scenery/tileentry.cxx
-index 31d14c713..04cddac30 100644
+index 31d14c713..7ca48c555 100644
 --- a/src/Scenery/tileentry.cxx
 +++ b/src/Scenery/tileentry.cxx
-@@ -46,6 +46,14 @@ TileEntry::TileEntry ( const SGBucket& b )
+@@ -46,6 +46,8 @@ TileEntry::TileEntry ( const SGBucket& b )
        _current_view(false),
        _time_expired(-1.0)
  {
-+    bool use_photoscenery = fgGetBool("/sim/rendering/photoscenery/enabled");
-+    if (use_photoscenery) {
-+        _orthophoto = simgear::Orthophoto::fromBucket(tile_bucket, globals->get_fg_scenery());
-+        if (_orthophoto) {
-+            simgear::OrthophotoManager::instance()->registerOrthophoto(tile_bucket.gen_index(), _orthophoto);
-+        }
-+    }
++    _create_orthophoto();
 +    
      tileFileName += ".stg";
      _node->setName(tileFileName);
      // Give a default LOD range so that traversals that traverse
-@@ -62,6 +70,14 @@ TileEntry::TileEntry( const TileEntry& t )
+@@ -62,6 +64,8 @@ TileEntry::TileEntry( const TileEntry& t )
    _current_view(t._current_view),
    _time_expired(t._time_expired)
  {
++    _create_orthophoto();
++
+     _node->setName(tileFileName);
+     // Give a default LOD range so that traversals that traverse
+     // active children (like the groundcache lookup) will work before
+@@ -69,6 +73,22 @@ TileEntry::TileEntry( const TileEntry& t )
+     _node->setRange(0, 0.0, 10000.0);
+ }
+ 
++void TileEntry::_create_orthophoto() {
 +    bool use_photoscenery = fgGetBool("/sim/rendering/photoscenery/enabled");
 +    if (use_photoscenery) {
 +        _orthophoto = simgear::Orthophoto::fromBucket(tile_bucket, globals->get_fg_scenery());
@@ -50,22 +54,27 @@ index 31d14c713..04cddac30 100644
 +            simgear::OrthophotoManager::instance()->registerOrthophoto(tile_bucket.gen_index(), _orthophoto);
 +        }
 +    }
++}
 +
-     _node->setName(tileFileName);
-     // Give a default LOD range so that traversals that traverse
-     // active children (like the groundcache lookup) will work before
-@@ -115,5 +131,9 @@ TileEntry::removeFromSceneGraph()
++void TileEntry::_free_orthophoto() {
++    if (_orthophoto) {
++        simgear::OrthophotoManager::instance()->unregisterOrthophoto(tile_bucket.gen_index());
++    }
++}
++
+ // Destructor
+ TileEntry::~TileEntry ()
+ {
+@@ -115,5 +135,7 @@ TileEntry::removeFromSceneGraph()
              parent->removeChild( _node.get() );
          }
      }
 +
-+    if (_orthophoto) {
-+        simgear::OrthophotoManager::instance()->unregisterOrthophoto(tile_bucket.gen_index());
-+    }
++    _free_orthophoto();
  }
  
 diff --git a/src/Scenery/tileentry.hxx b/src/Scenery/tileentry.hxx
-index 56f2550cd..345e31af3 100644
+index 56f2550cd..3eee3daa4 100644
 --- a/src/Scenery/tileentry.hxx
 +++ b/src/Scenery/tileentry.hxx
 @@ -29,6 +29,9 @@
@@ -95,3 +104,13 @@ index 56f2550cd..345e31af3 100644
  
      /**
       * This value is used by the tile scheduler/loader to load tiles
+@@ -72,6 +78,9 @@ private:
+     /** Time when tile expires. */
+     double _time_expired;
+ 
++    void _create_orthophoto();
++    void _free_orthophoto();
++
+ public:
+ 
+     // Constructor
