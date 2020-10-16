@@ -12,13 +12,13 @@ This is a work in progress. Currently, you need to provide the satellite orthoph
 
 ## Getting it
 
-I plan to release prebuilt binaries for Linux, MacOS, and Windows to coincide with the upcoming release of FlightGear 2020.2. Currently, you need to build from source.
+I plan to release prebuilt binaries for Linux, MacOS, and Windows to coincide with the upcoming release of FlightGear 2020.3 LTS. Currently, you need to build from source.
 
 ## Building from source
 
-You can use either the `release/2020.2` branches, or the `next` branches. The `next` branches are more bleeding-edge, and are targeting version 2020.3.
+You can use either the `release/2020.3` branches, or the `next` branches. The `next` branches are more bleeding-edge, and are targeting version 2020.4.
 
-1. Clone the official FlightGear base data package at the `next` or `release/2020.2` branch. Apply my patch. ([fgdata.patch](fgdata.patch) in this repository)
+1. Clone the official FlightGear base data package at the `next` or `release/2020.3` branch. Apply my patch. ([fgdata.patch](fgdata.patch) in this repository)
 2. Clone my patched [SimGear repository](https://github.com/nathanielwarner/simgear) (`git clone https://github.com/nathanielwarner/simgear`). Checkout the branch you're using and follow the normal build and install instructions. You may want to set the install prefix so as not to conflict with an existing installation of simgear.
 3. Clone my patched [FlightGear repository](https://github.com/nathanielwarner/flightgear) (`git clone https://github.com/nathanielwarner/flightgear`). Checkout the branch you're using and follow the normal build instructions, making sure that the base data package and simgear location is set to the patched ones you installed.
 
