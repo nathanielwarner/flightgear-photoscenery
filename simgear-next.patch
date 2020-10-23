@@ -301,10 +301,10 @@ index 09e225c0..f5823550 100644
      PrimitiveUtils.cxx
 diff --git a/simgear/scene/util/OrthophotoManager.cxx b/simgear/scene/util/OrthophotoManager.cxx
 new file mode 100644
-index 00000000..ae69c6df
+index 00000000..62cb9c42
 --- /dev/null
 +++ b/simgear/scene/util/OrthophotoManager.cxx
-@@ -0,0 +1,341 @@
+@@ -0,0 +1,340 @@
 +// OrthophotoManager.cxx -- manages satellite orthophotos
 +//
 +// Copyright (C) 2020  Nathaniel MacArthur-Warner nathanielwarner77@gmail.com
@@ -338,8 +338,7 @@ index 00000000..ae69c6df
 +        if (_minPosLon <= 180 && _maxPosLon >= 0 && _minNegLon < 0 && _maxNegLon >= -180) {
 +            // We have negative and positive longitudes.
 +            // Choose whether we're straddling the Prime Meridian or 180th meridian
-+            // based on which produces a smaller bounding box.
-+            if (_maxPosLon - _minNegLon <= _maxNegLon - _minPosLon) {
++            if (_maxPosLon - _minNegLon < 180) {
 +                _hemisphere = StraddlingPm;
 +            } else {
 +                _hemisphere = StraddlingIdl;
