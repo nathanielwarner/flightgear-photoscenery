@@ -12,7 +12,7 @@ This is a work in progress. Currently, you need to provide the satellite orthoph
 
 ## Getting it
 
-I plan to release prebuilt binaries for Linux, MacOS, and Windows to coincide with the upcoming release of FlightGear 2020.3 LTS. Currently, you need to build from source.
+Currently, you need to build from source. I'm working on getting this merged into upstream FlightGear in the near future. Depending on the timeframe, I plan to release prebuilt binaries for Linux, MacOS, and Windows based on FlightGear 2020.3 LTS.
 
 ## Building from source
 
@@ -26,6 +26,8 @@ You can use either the `release/2020.3` branches, or the `next` branches. The `n
 
 You'll need to have an `Orthophotos/` subdirectory in one of your scenery folders, alongside `Terrain/`, `Buildings/`, etc. You could put it in existing custom scenery packages, or keep your orthophotos in a separate package (for example to use them with TerraSync).
 
-The `Orthophotos/` subdirectory is further split by geographic location to mirror other scenery subdirectories. The orthophotos themselves are named after their tile number. You can determine the tile number you need by using the [latlontotile.py](latlontotile.py) script. For example, to provide photoscenery for tile 991000, you'll provide an orthophoto named `991000.png`. This is a normal PNG file, with the image flipped vertically.
+The `Orthophotos/` subdirectory is further split by geographic location to mirror other scenery subdirectories. The orthophotos themselves are named after their tile number. You can determine the tile number you need by using the [latlontotile.py](latlontotile.py) script. For example, to provide photoscenery for tile 991000, you'll provide an orthophoto named `991000.png`. This is a normal PNG file.
+
+**_Attention: You no longer need to flip the orthophoto vertically._**
 
 Once you have your orthophotos in place, you're all set! You can toggle the photoscenery on and off in the Rendering settings menu in FlightGear.
