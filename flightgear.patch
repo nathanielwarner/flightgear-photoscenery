@@ -1,8 +1,8 @@
 diff --git a/src/GUI/AddOnsController.cxx b/src/GUI/AddOnsController.cxx
-index 39e7e44bd..40a4ce421 100644
+index 34070552b..9132efb4f 100644
 --- a/src/GUI/AddOnsController.cxx
 +++ b/src/GUI/AddOnsController.cxx
-@@ -215,7 +215,7 @@ QString AddOnsController::addSceneryPath() const
+@@ -219,7 +219,7 @@ QString AddOnsController::addSceneryPath() const
      SGPath p(path.toStdString());
      bool isValid = false;
  
@@ -11,7 +11,7 @@ index 39e7e44bd..40a4ce421 100644
          if ((p / dir).exists()) {
              isValid = true;
              break;
-@@ -228,7 +228,7 @@ QString AddOnsController::addSceneryPath() const
+@@ -232,7 +232,7 @@ QString AddOnsController::addSceneryPath() const
          mb.setStandardButtons(QMessageBox::Yes | QMessageBox::No);
          mb.setDefaultButton(QMessageBox::No);
          mb.setInformativeText(tr("Added scenery should contain at least one of the following "
