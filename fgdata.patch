@@ -718,18 +718,6 @@ index ebe1b95a9..f58ab8ee1 100644
      normal = gl_NormalMatrix * gl_Normal;
      //nvec = (gl_NormalMatrix * gl_Normal).xy;
      vec4 ambient_color, diffuse_color;
-diff --git a/Shaders/ws30.frag b/Shaders/ws30.frag
-index f8fa8fb68..c18fc9e64 100644
---- a/Shaders/ws30.frag
-+++ b/Shaders/ws30.frag
-@@ -8,6 +8,7 @@
- varying vec4 diffuse_term;
- varying vec3 normal;
- varying vec3 relPos;
-+varying vec2 orthoTexCoord;
- 
- 
- uniform sampler2D landclass;
 diff --git a/defaults.xml b/defaults.xml
 index acdfcdeff..f7b1c1668 100644
 --- a/defaults.xml
