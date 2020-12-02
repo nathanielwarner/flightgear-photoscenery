@@ -14,10 +14,24 @@ This project has now been merged into upstream FlightGear, so you no longer need
 
 ## Using It
 
+You can easily make photoscenery using the [creator.py](creator.py) script. Provide either `--lon` and `--lat`, or `--index` (bucket index). Also provide `--scenery_folder` to specify where to save it. (Otherwise it will save to the current directory.)
+
+For example, to make photoscenery for the tile containing the Eiffel Tower, you would first find its coordinates. (Latitude 48.858, Longitude 2.295) Then, you run the script, providing the coordinates.
+
+```
+python creator.py --lat 48.858 --lon 2.295
+```
+
+_Note: If your system uses Python 2, you'll need to run `python3` instead of `python`._
+
+When you run FlightGear, you'll need to go to the "Add-ons" tab of the launcher, and add the folder where you saved it as an "Additional scenery folder".
+
+Once you're loaded in (after pressing "Fly" in the launcher), you can toggle the photoscenery on and off in the Rendering settings menu in FlightGear.
+
+## Manual Instructions
+
 You'll need to have an `Orthophotos/` subdirectory in one of your scenery folders, alongside `Terrain/`, `Buildings/`, etc. You could put it in existing custom scenery packages, or keep your orthophotos in a separate package (for example to use them with TerraSync).
 
-The `Orthophotos/` subdirectory is further split by geographic location to mirror other scenery subdirectories. The orthophotos themselves are named after their tile number. You can determine the tile number you need by using the [latlontotile.py](latlontotile.py) script. For example, to provide photoscenery for tile 991000, you'll provide an orthophoto named `991000.png`. This is a normal PNG file.
+The `Orthophotos/` subdirectory is further split by geographic location to mirror other scenery subdirectories. The orthophotos themselves are normal PNG files, named after their tile number. You can determine the tile number you need, as well as the base path in which to save it, by using the [creator.py](creator.py) script, passing `--show_info` as an argument to show tile information rather than automatically download the photo.
 
 **_Attention: You no longer need to flip the orthophoto vertically._**
-
-Once you have your orthophotos in place, you're all set! You can toggle the photoscenery on and off in the Rendering settings menu in FlightGear.

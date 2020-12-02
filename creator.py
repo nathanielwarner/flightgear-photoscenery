@@ -89,8 +89,11 @@ class Bucket(object):
 
 
 def download(bucket, to):
-    full_out_path = os.path.join(to, 'Orthophotos', bucket.get_base_path(), str(bucket.get_index()) + '.png')
-    print('Download path: ' + full_out_path)
+    out_dir = os.path.join(to, 'Orthophotos', bucket.get_base_path())
+    if not os.path.isdir(out_dir):
+        os.makedirs(out_dir)
+    full_out_path = os.path.join(out_dir, str(bucket.get_index()) + '.png')
+    print('Downloading to: ' + full_out_path)
 
     if os.path.exists(full_out_path):
         print('Target orthophoto already exists')
@@ -117,13 +120,13 @@ def main():
     parser.add_argument('--index', type=int, required=False)
     parser.add_argument('--lon', type=float, required=False)
     parser.add_argument('--lat', type=float, required=False)
-    parser.add_argument('--dry_run', dest='dry_run', action='store_true', default=False)
+    parser.add_argument('--show_info', dest='show_info', action='store_true', default=False)
     parser.add_argument('--scenery_folder', type=str, required=False, default=os.getcwd())
     args = vars(parser.parse_args())
     index = args['index']
     lon = args['lon']
     lat = args['lat']
-    dry_run = args['dry_run']
+    show_info = args['show_info']
     to = os.path.abspath(args['scenery_folder'])
     bucket = None
     if index is not None:
@@ -134,12 +137,11 @@ def main():
         print('You gotta give me something!')
         exit(1)
 
-    print(bucket)
-    print(bucket.get_index())
-    print(bucket.get_bounds())
-    print(bucket.get_base_path())
-
-    if not dry_run:
+    if show_info:
+        print('Bucket index: %d' % bucket.get_index())
+        print(bucket.get_bounds())
+        print('Base path: %s' % bucket.get_base_path())
+    else:
         download(bucket, to)
 
 
