@@ -103,7 +103,7 @@ def download(bucket, to):
     width = int(4096 * ((get_tile_width(bucket.lat)) / 0.125))
     height = 4096
     url = 'http://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export' \
-          '?bbox=%f,%f,%f,%f&bboxSR=4326&size=%d,%d&imageSR=4326&format=png&f=image' \
+          '?bbox=%f,%f,%f,%f&bboxSR=4326&size=%d,%d&imageSR=4326&format=png32&f=image' \
           % (bounds['min_lon'], bounds['min_lat'], bounds['max_lon'], bounds['max_lat'], width, height)
     print('URL: ' + url)
 
