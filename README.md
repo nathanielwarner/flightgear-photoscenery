@@ -32,6 +32,6 @@ Once you're loaded in (after pressing "Fly" in the launcher), you can toggle the
 
 You'll need to have an `Orthophotos/` subdirectory in one of your scenery folders, alongside `Terrain/`, `Buildings/`, etc. You could put it in existing custom scenery packages, or keep your orthophotos in a separate package (for example to use them with TerraSync).
 
-The `Orthophotos/` subdirectory is further split by geographic location to mirror other scenery subdirectories. The orthophotos themselves are normal PNG files, named after their tile number. You can determine the tile number you need, as well as the base path in which to save it, by using the [creator.py](creator.py) script, passing `--show_info` as an argument to show tile information rather than automatically download the photo.
+The `Orthophotos/` subdirectory is further split by geographic location to mirror other scenery subdirectories. The orthophotos themselves are normal PNG files, named after their tile number. You can determine the tile number you need, as well as the base path in which to save it, by using the [creator.py](creator.py) script, passing `--info_only` as an argument to show tile information only rather than automatically download the photo.
 
 **_Attention: You no longer need to flip the orthophoto vertically._**

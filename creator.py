@@ -120,13 +120,13 @@ def main():
     parser.add_argument('--index', type=int, required=False)
     parser.add_argument('--lon', type=float, required=False)
     parser.add_argument('--lat', type=float, required=False)
-    parser.add_argument('--show_info', dest='show_info', action='store_true', default=False)
+    parser.add_argument('--info_only', dest='info_only', action='store_true', default=False)
     parser.add_argument('--scenery_folder', type=str, required=False, default=os.getcwd())
     args = vars(parser.parse_args())
     index = args['index']
     lon = args['lon']
     lat = args['lat']
-    show_info = args['show_info']
+    info_only = args['info_only']
     to = os.path.abspath(args['scenery_folder'])
     bucket = None
     if index is not None:
@@ -137,11 +137,11 @@ def main():
         print('You gotta give me something!')
         exit(1)
 
-    if show_info:
-        print('Bucket index: %d' % bucket.get_index())
-        print(bucket.get_bounds())
-        print('Base path: %s' % bucket.get_base_path())
-    else:
+    print('Bucket index: %d' % bucket.get_index())
+    print('Base path: %s' % bucket.get_base_path())
+    print(bucket.get_bounds())
+
+    if not info_only:
         download(bucket, to)
 
 
