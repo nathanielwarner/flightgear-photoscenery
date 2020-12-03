@@ -103,11 +103,20 @@ def download(bucket, to):
     width = int(4096 * ((get_tile_width(bucket.lat)) / 0.125))
     height = 4096
     url = 'http://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export' \
-          '?bbox=%f,%f,%f,%f&bboxSR=4326&size=%d,%d&imageSR=4326&format=png32&f=image' \
+          '?bbox=%f,%f,%f,%f&bboxSR=4326&size=%d,%d&imageSR=4326&format=png24&f=image' \
           % (bounds['min_lon'], bounds['min_lat'], bounds['max_lon'], bounds['max_lat'], width, height)
     print('URL: ' + url)
 
     response = requests.get(url)
+
+    if response.status_code != 200:
+        print('Failed to download orthophoto')
+        print('Status Code: %d' % response.status_code)
+        return
+    
+    if response.headers['Content-Type'] != 'image/png':
+        print('Received invalid response type. Expected "image/png", got "%s"' % response.headers['Content-Type'])
+        return
 
     with open(full_out_path, 'wb') as fd:
         for chunk in response.iter_content(chunk_size=128):
