@@ -118,9 +118,16 @@ def download(bucket, to):
         print('Received invalid response type. Expected "image/png", got "%s"' % response.headers['Content-Type'])
         return
 
+    specified_content_length = int(response.headers['Content-Length'])
+    received_content_length = 0
+
     with open(full_out_path, 'wb') as fd:
         for chunk in response.iter_content(chunk_size=128):
+            received_content_length += len(chunk)
             fd.write(chunk)
+
+    if (specified_content_length != received_content_length):
+        print('WARNING: Expected %d bytes, but received %d bytes. The downloaded photo may be corrupt.')
 
 
 def main():
