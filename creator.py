@@ -127,7 +127,7 @@ def download(bucket, to):
             fd.write(chunk)
 
     if (specified_content_length != received_content_length):
-        print('WARNING: Expected %d bytes, but received %d bytes. The downloaded photo may be corrupt.')
+        print('WARNING: Expected %d bytes, but received %d bytes. The downloaded photo may be corrupt.' % (specified_content_length, received_content_length))
 
 
 def main():
