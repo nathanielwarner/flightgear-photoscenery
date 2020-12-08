@@ -10,23 +10,31 @@ Normally, FlightGear uses generic terrain textures. Photoscenery allows you to r
 
 ## Getting it
 
-This project has now been merged into upstream FlightGear, so you no longer need to apply patches or build from source! Visit the [FlightGear nightly builds website](http://download.flightgear.org/builds/nightly/) to obtain the latest build for your platform of choice. Source code is also available.
+This project has now been merged into upstream FlightGear, so you no longer need to apply patches or build from source! Visit the [FlightGear nightly builds website](http://download.flightgear.org/builds/nightly/) to obtain the latest build for your platform of choice. If you're downloading the FlightGear Data package separately, please note that you should obtain this [from Git](https://sourceforge.net/p/flightgear/fgdata/ci/next/tree/), since this package is out of date on the nightly builds.
 
 ## Using It
 
-You can easily make photoscenery using the [creator.py](creator.py) script. Provide either `--lon` and `--lat`, or `--index` (bucket index). Also provide `--scenery_folder` to specify where to save it. (Otherwise it will save to the current directory.)
+### Prerequisites
 
-For example, to make photoscenery for the tile containing the Eiffel Tower, you would first find its coordinates. (Latitude 48.858, Longitude 2.295) Then, you run the script, providing the coordinates.
+In addition to [FlightGear nightly](http://download.flightgear.org/builds/nightly/), you'll need [Python 3](https://www.python.org/downloads/), along with the [requests package](https://pypi.org/project/requests/). Also, clone this repo (`git clone https://github.com/nathanielwarner/flightgear-photoscenery`) to get the `creator.py` script.
+
+### Instructions
+
+Set aside a folder that you'll use to save photoscenery. In these instructions, I'll specify it as `/home/yourname/photoscenery`.
+
+Photoscenery is created by providing satellite orthophotos for the [scenery tiles](http://wiki.flightgear.org/Tile_Index_Scheme) you want. The [creator.py](creator.py) script automates the download of these orthophotos from ArcGIS servers. To use it, provide either the index of the tile you want (`--index`), or a latitude and longitude (`--lat` and `--lon`).
+
+For example, to make photoscenery for the tile containing the Eiffel Tower, you would first find its coordinates. (Latitude 48.858, Longitude 2.295) Then, you run the script, providing the coordinates and your download folder.
 
 ```
-python creator.py --lat 48.858 --lon 2.295
+python creator.py --scenery_folder /home/yourname/photoscenery --lat 48.858 --lon 2.295
 ```
 
 _Note: If your system uses Python 2, you'll need to run `python3` instead of `python`._
 
-When you run FlightGear, you'll need to go to the "Add-ons" tab of the launcher, and add the folder where you saved it as an "Additional scenery folder".
+When you run FlightGear, you'll need to go to the "Add-ons" tab of the launcher, and add the folder where you saved it (`/home/yourname/photoscenery` in this example) as an "Additional scenery folder".
 
-Once you're loaded in (after pressing "Fly" in the launcher), you can toggle the photoscenery on and off in the Rendering settings menu in FlightGear.
+Once you're loaded in (after pressing "Fly" in the launcher), you can toggle Satellite Photoscenery on and off in the Rendering settings menu (View -> Rendering Options) in FlightGear.
 
 ## Manual Instructions
 
