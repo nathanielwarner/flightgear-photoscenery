@@ -16,7 +16,7 @@ This project has now been merged into upstream FlightGear, so you no longer need
 
 ### Prerequisites
 
-In addition to [FlightGear nightly](http://download.flightgear.org/builds/nightly/), you'll need [Python 3](https://www.python.org/downloads/), along with the [requests package](https://pypi.org/project/requests/). Also, clone this repo (`git clone https://github.com/nathanielwarner/flightgear-photoscenery`) to get the `creator.py` script.
+In addition to [FlightGear nightly](http://download.flightgear.org/builds/nightly/) with [FGData from Git](https://sourceforge.net/p/flightgear/fgdata/ci/next/tree/), you'll need [Python 3](https://www.python.org/downloads/), along with the [requests package](https://pypi.org/project/requests/). Also, clone this repo (`git clone https://github.com/nathanielwarner/flightgear-photoscenery`) to get the `creator.py` script.
 
 ### Instructions
 
