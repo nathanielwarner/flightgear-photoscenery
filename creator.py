@@ -41,6 +41,9 @@ URLS = {
     'USGS': 'https://basemap.nationalmap.gov/arcgis/rest/services/USGSImageryOnly/MapServer/export?bbox={tbounds[0]},{tbounds[1]},{tbounds[2]},{tbounds[3]}&bboxSR=4326&size={tsize[0]},{tsize[1]}&imageSR=4326&format=png24&f=image',
     #geoportal.gov.pl only Poland (licence unknown, apart general statment as free to download not sure if via this view service)[!!! theight must be set as not larger than 1024 !!!]
     'GeoportalPL': 'https://mapy.geoportal.gov.pl/wss/service/img/guest/ORTO/MapServer/WMSServer?REQUEST=GetMap&VERSION=1.3.0&TRANSPARENT=TRUE&LAYERS=RASTER&STYLES=&CRS=CRS:84&EXCEPTIONS=xml&BBOX={tbounds[0]},{tbounds[1]},{tbounds[2]},{tbounds[3]}&WIDTH={tsize[0]}&HEIGHT={tsize[1]}&FORMAT=image/png',
+    # geoservice bayern (DE/Bavaria); License CC-BY  https://geodatenonline.bayern.de/geodatenonline/seiten/wms_dop80cm
+    # Max image size is 4000x4000, so you need to supply --theight 1024 or something like that
+    'geoservices.bayern.de': 'https://geoservices.bayern.de/wms/v2/ogc_dop80_oa.cgi?version=1.1.1&service=WMS&request=GetMap&layers=by_dop80c&bbox={tbounds[0]},{tbounds[1]},{tbounds[2]},{tbounds[3]}&width={tsize[0]}&height={tsize[1]}&srs=EPSG:4326&exceptions=xml&format=image/png',
 }
 
 # Tile height, in degrees. This is a constant for FG
