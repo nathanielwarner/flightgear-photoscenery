@@ -63,6 +63,8 @@ sleep(5);
 my %seenIDX = ();
 for (my $lat=$latLL; $lat <= $latUR; $lat=$lat+0.05) {
     for (my $lon=$lonLL; $lon <= $lonUR; $lon=$lon+0.05) {
+        $lat = sprintf("%.4f", $lat);
+        $lon = sprintf("%.4f", $lon);
 	my $cmd = "python3 creator.py --lat \"$lat\" --lon \"$lon\" --info_only";
 	print "cmd=$cmd\n";
         my $output = `$cmd`;
