@@ -7,8 +7,24 @@
 # Example: `./create_dds.sh /usr/share/games/flightgear/OrtoPhoto/cols4/Orthophotos/`
 #
 
-root="."; [[ -n "$1" ]] && root="$1"
+# Check if NVIDIA texture tools is installed
+command -v nvcompress >/dev/null
+if [[ $? -gt 0 ]]; then
+	echo "ERROR: unmet dependency: 'nvcompress'."
+	echo "This tool needs the NVIDIA texture tools (maybe 'apt-get install libnvtt-bin'?)"
+	exit 1
+fi
 
-find $root -name '*.png' | while IFS= read file; do dir=$(dirname $file); name=$(basename $file .png); echo -n "$file: "; if [ -f ${dir}/${name}.dds ]; then echo "dds already there"; else echo "convert to dds (dxt5:${dir}/${name}.dds)"; convert $file -define dds:compression=DXT5 dxt5:${dir}/${name}.dds.tmp; mv ${dir}/${name}.dds.tmp ${dir}/${name}.dds; fi; done; 
+root="."; [[ -n "$1" ]] && root="$1"
+find $root -name '*.png' | while IFS= read file; do
+    dir=$(dirname $file); name=$(basename $file .png);
+    echo -n "$file: ";
+    if [ -f ${dir}/${name}.dds ]; then
+        echo "dds already there";
+    else
+        echo "convert to dds (dxt1a:${dir}/${name}.dds)";
+	nvcompress -bc1a $file ${dir}/${name}.dds.tmp
+        mv ${dir}/${name}.dds.tmp ${dir}/${name}.dds;
+    fi; done; 
 
 echo "done."
