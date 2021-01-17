@@ -27,14 +27,36 @@ Photoscenery is created by providing satellite orthophotos for the [scenery tile
 For example, to make photoscenery for the tile containing the Eiffel Tower, you would first find its coordinates. (Latitude 48.858, Longitude 2.295) Then, you run the script, providing the coordinates and your download folder.
 
 ```
-python creator.py --scenery_folder /home/yourname/photoscenery --lat 48.858 --lon 2.295
+./creator.py --scenery_folder /home/yourname/photoscenery --lat 48.858 --lon 2.295
 ```
 
-_Note: If your system uses Python 2, you'll need to run `python3` instead of `python`._
+_Note: If you have Windows, you'll need to run `python creator.py` instead of `./creator.py`._
 
 When you run FlightGear, you'll need to go to the "Add-ons" tab of the launcher, and add the folder where you saved it (`/home/yourname/photoscenery` in this example) as an "Additional scenery folder".
 
 Once you're loaded in (after pressing "Fly" in the launcher), you can toggle Satellite Photoscenery on and off in the Rendering settings menu (View -> Rendering Options) in FlightGear.
+
+### Providers
+
+The `creator.py` script has an option `--provider` which allows you to specify the orthophoto provider that you download from. By default, it selects the ArcGIS provider, which has global coverage. Your use of ArcGIS services is subject to the [ESRI Terms of Use](https://www.esri.com/en-us/legal/terms/full-master-agreement). By using this script, you take responsibility for following applicable terms of use.
+
+Other providers are available under permissive licenses. For example, the United States is covered by the USGS provider. See the [creator.py](creator.py) script for the complete list, which is being expanded over time.
+
+### Bulk Download
+
+You can automatically download a range of tiles, rather than one at a time, using the [create_bbox.pl](create_bbox.pl) script. Perl is required. Specify the bounding box you want with the `--latLL`, `--lonLL`, `--latUR`, and `--lonUR` options, where "LL" means lower left and "UR" means upper right. After these options, add a `--` then the options to pass through to `creator.py`.
+
+For example, you could download the Innsbruck region:
+```
+./create_bbox.pl --latLL 47.1967 --lonLL 11.1984 --latUR 47.5321 --lonUR 11.7682 -- --cols 2 --scenery_folder /home/yourname/photoscenery
+```
+
+### DDS Orthophotos
+
+FlightGear now has support for DDS-format orthophotos as well as PNG, which reduces RAM and VRAM usage. The [create_dds.sh](create_dds.sh) script is provided to automatically convert all the PNG files in a directory to DDS using ImageMagick or Nvidia Texture Tools. (Bash is also required since it's a bash script.) You can run it like so:
+```
+./create_dds.sh /home/yourname/photoscenery
+```
 
 ## Manual Instructions
 
