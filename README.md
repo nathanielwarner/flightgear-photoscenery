@@ -51,6 +51,10 @@ For example, you could download the Innsbruck region:
 ./create_bbox.pl --latLL 47.1967 --lonLL 11.1984 --latUR 47.5321 --lonUR 11.7682 -- --cols 2 --scenery_folder /home/yourname/photoscenery
 ```
 
+_Note: If you have Windows, you'll need to run `create_bbox.pl` instead of `./create_bbox.pl`._
+
+Sometimes, when multiple versions of Python are installed on your computer, this will result in Python 3 being referred to as `python3`, however if you have just one version of Python, the keyword will be referred to as `python`. You may see this cause an error such as `Python was not found; run without arguments to install from the Microsoft Store, or disable this shortcut from Settings > Manage App Execution Aliases.`. This can be simply fixed by editing the create_bbox.pl script to rename all instances of `python3` to `python`.
+
 ### DDS Orthophotos
 
 FlightGear now has support for DDS-format orthophotos as well as PNG, which reduces RAM and VRAM usage. The [create_dds.sh](create_dds.sh) script is provided to automatically convert all the PNG files in a directory to DDS using ImageMagick or Nvidia Texture Tools. (Bash is also required since it's a bash script.) You can run it like so:
