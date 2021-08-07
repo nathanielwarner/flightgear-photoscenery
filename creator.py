@@ -31,7 +31,7 @@ from PIL import Image, UnidentifiedImageError
 # Ortophoto servers
 # The url is a format string. 'tbounds(minlon,minlat,maxlon,maxlat)' is used for tile bounds and 'tsize(width,height)' for tile size, in pixels.
 URLS = {
-    # ArcGIS. suitable for the entire world, license forbids using these images offline
+    # ArcGIS. suitable for the entire world. under restrictive license, see https://www.esri.com/en-us/legal/terms/full-master-agreement
     'ArcGIS': 'http://services.arcgisonline.com/arcgis/rest/services/World_Imagery/MapServer/export?bbox={tbounds[0]},{tbounds[1]},{tbounds[2]},{tbounds[3]}&bboxSR=4326&size={tsize[0]},{tsize[1]}&imageSR=4326&format=png24&f=image',
     # PNOA. only Spain. license CC-BY
     # https://pnoa.ign.es/presentacion-y-objetivo
