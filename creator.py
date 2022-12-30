@@ -24,6 +24,7 @@ import argparse
 import requests
 import logging
 import os
+import platform
 import tempfile
 from PIL import Image, UnidentifiedImageError
 
@@ -48,6 +49,28 @@ URLS = {
 
 # Tile height, in degrees. This is a constant for FG
 TILE_HEIGHT = 0.125
+
+
+def find_default_cache_dir():
+    name = "FlightGear photoscenery creator"
+
+    if platform.system() == "Windows":
+        dir_ = os.path.join(os.getenv("APPDATA", "C:/"), name, "cache")
+    else:
+        home_dir = os.path.expanduser('~')
+        assert home_dir != "", \
+            "Empty expansion of os.path.expanduser('~'); this is unexpected"
+        d = os.getenv("XDG_CACHE_HOME", "")
+        if not d:
+            d = os.path.join(home_dir, ".cache")
+        dir_ = os.path.join(d, name)
+
+    # This converts / to \ on Windows, which can be useful when displaying
+    # paths to users.
+    return os.path.normpath(dir_)
+
+# Default directory for storing downloaded tiles before they are assembled
+DEFAULT_CACHE_DIR = find_default_cache_dir()
 
 
 def get_tile_width(lat):
@@ -139,16 +162,40 @@ class Bucket(object):
 
 
 class ImageProvider:
-    """ Downloads a image from a URL """
+    """Download an image from a URL.
 
-    def __init__(self, url):
-        """
+    The URL is expected to have specific fields for use with
+    str.format() (see the global variable URLS).
+
+    Downloaded images (tiles) are cached until they are assembled. This
+    way, if a bucket is made of, e.g., 16 tiles and creator.py aborts
+    due to a server error after downloading, say, 12 tiles, the next
+    time creator.py is asked to fetch the same bucket from the same
+    provider, it will find the 12 tiles that were already fetched and
+    only download the remaining 4.
+
+    The cached tiles are automatically deleted as soon as the bucket
+    they were downloaded for is assembled. Since mixing neighbor tiles
+    from different providers is likely to give ugly results, cached
+    tiles are stored in provider-specific subdirectories of the base
+    cache directory, and only reused when fetching the same bucket from
+    the same provider.
+
+    """
+
+    def __init__(self, name, url):
+        """Construct an ImageProvider instance.
+
         Params:
+            name: string that should uniquely identify the chosen provider
+                  (it is used to determine where cached tiles are stored)
             url: format string with the url. 'tbounds(minlon,minlat,maxlon,maxlat)' is used for tile bounds and 'tsize(width,height)' for tile size, in pixels. See examples.
         """
+        self.name = name
         self._url = url
 
-    def download(self, bucket, outpath, tnum=(1,1), theight=512, dry_run=False):
+    def download(self, bucket, outpath, cache_dir, tnum=(1,1), theight=512,
+                 dry_run=False):
         """ Downloads a FG bucket and save in outpath.
         A bucket is the final image for FG. A tile is each one of the little images that create a bucket. Many online
         services won't allow downloading huge images at once, and you must cut buckets down into tiles.
@@ -156,6 +203,7 @@ class ImageProvider:
         Params:
             bucket: a Bucket object
             outpath: string, path to the output file
+            cache_dir: directory where downloaded tiles are stored before they can be assembled
             tnum: (cols,rows) number of tiles in the bucket. Use (1,1), (2,2), (4,4)... other pairs are not tested
             theight: height of a tile, in pixels. The width depends on the latitude. Use power of two numbers: 512, 1028, 2048... The final image will have a theight of tsize*tnum
             dry_run: if True, do not donwload anything. Useful for testing
@@ -170,7 +218,7 @@ class ImageProvider:
         # size of the tile, in degrees
         gtwidth = bwidth / tnum[0]
         gtheight = TILE_HEIGHT / tnum[1]
-        # An array with files objects with each tile
+        # Contains file paths (one for each tile that was successfully fetched)
         ftiles = []
 
         for r in range(0, tnum[1]):
@@ -180,32 +228,71 @@ class ImageProvider:
                 max_lon = min_lon + gtwidth
                 max_lat = min_lat + gtheight
                 tbounds = (min_lon, min_lat, max_lon, max_lat)
-                ftiles.append(self._download_tile(tbounds=tbounds, tsize=tsize, dry_run=dry_run))
+                ftiles.append(self._download_and_cache_tile(
+                    cache_dir, tbounds=tbounds, tsize=tsize, dry_run=dry_run))
         if not dry_run:
             logging.info('Joining tiles to %s', outpath)
             with open(outpath, 'wb') as fout:
                 # note we always combine all tiles, even in the (1,1) case
                 self._join(fout, ftiles=ftiles, tnum=tnum,)
-        for f in ftiles:
-            f.close()
 
-    def _download_tile(self, tbounds, tsize=(512, 256), dry_run=False):
+            for f in ftiles: # the cached tiles are now assembled, remove them
+                logging.debug("Removing cached tile '%s'", f)
+                os.unlink(f)
+
+    def _download_and_cache_tile(self, base_cache_dir, tbounds, tsize=(512, 256),
+                                 dry_run=False):
         """ Downloads a tile from the remote server and returns a file object.
         A bucket is the final image for FG. A tile is each one of the little images that create a bucket. Many online
         services won't allow downloading huge images at once, and you must cut buckets down into tiles.
 
         Params:
+            base_cache_dir: base directory under which downloaded tiles
+                            are stored before they can be assembled
             tbounds: bounds of the tile, in degrees
             tsize: size of the tile, in pixels
             dry_run: if True, do not donwload anything. Useful for testing
 
         Returns:
-            The tile, as a file object.
+            A path to the cached file corresponding to the tile.
         """
+        # Provider-specific directory for storing cached downloaded tiles
+        cache_dir = os.path.join(base_cache_dir, self.name)
+        os.makedirs(cache_dir, exist_ok=True)
 
-        fout = tempfile.NamedTemporaryFile(mode='w+b')
+        # The .08f gives us millimeter precision, so we can be sure not to
+        # inadvertently reuse a cached tile that doesn't quite correspond to
+        # the current tbounds.
+        fname = "tile-{w}x{h}_{min_lon:.08f}-{min_lat:.08f}" \
+                            "_{max_lon:.08f}-{max_lat:.08f}.png" \
+            .format(w=tsize[0], h=tsize[1], min_lon=tbounds[0],
+                    min_lat=tbounds[1], max_lon=tbounds[2], max_lat=tbounds[3])
+        fpath = os.path.join(cache_dir, fname)
+
+        if os.path.exists(fpath):
+            logging.info("'%s' already in cache, not downloading it again",
+                         fname)
+        else:
+            tmp_file = None
+            try:
+                with tempfile.NamedTemporaryFile(
+                        mode='wb', dir=cache_dir, prefix="tmp" + fname + ".",
+                        delete=False) as tmp_file:
+                    self._download_tile(tmp_file, tbounds, tsize, dry_run)
+                # When the rename() happens, we know the file is complete so
+                # it can be kept in cache for later reuse.
+                if not dry_run:
+                    os.rename(tmp_file.name, fpath)
+                    logging.info("'%s' successfully fetched", fname)
+            finally:
+                if tmp_file is not None and os.path.exists(tmp_file.name):
+                    os.unlink(tmp_file.name)
+
+        return fpath
+
+    def _download_tile(self, dest_file, tbounds, tsize, dry_run):
         url = self._url.format(tbounds=tbounds, tsize=tsize)
-        logging.info('Downloading tile=%s from url=%s', fout.name, url)
+        logging.info('Downloading tile=%s from url=%s', dest_file.name, url)
 
         if not dry_run:
             response = requests.get(url)
@@ -216,11 +303,7 @@ class ImageProvider:
                 raise Exception('Received invalid response type. Expected "image/png", got content_type="{}"'.format(response.headers['Content-Type']))
 
             for chunk in response.iter_content(chunk_size=128):
-                fout.write(chunk)
-
-        # move to the begining of the file: it must be read to combine these files into a bucket
-        fout.seek(0)
-        return fout
+                dest_file.write(chunk)
 
     def _join(self, fout, ftiles, tnum=(1,1)):
         """ Join a collection of files (tile images) into a single file.
@@ -260,6 +343,9 @@ def main():
     parser.add_argument('--dry_run', dest='dry_run', action='store_true', default=False, help="If set, do not download anything, but show what would be downloaded.")
     parser.add_argument('--verbose', dest='verbose', action='store_true', default=False, help="If set, be verbose")
     parser.add_argument('--scenery_folder', type=str, required=False, default=os.getcwd(), help="Scenery directory, for the output")
+    parser.add_argument('--cache_dir', default=DEFAULT_CACHE_DIR,
+                        help="""\
+Directory where downloaded tiles are stored before they can be assembled""")
     parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False, help='Overwrite the orthophoto if it already exists')
     args = vars(parser.parse_args())
 
@@ -295,8 +381,11 @@ def main():
         logging.error('Target orthophoto already exists, skipping. Pass --overwrite to override this check.')
         exit(1)
 
-    provider = ImageProvider(URLS[args['provider']])
-    provider.download(bucket, full_out_path, tnum=(args['cols'],args['cols']), theight=args['theight'], dry_run=args['dry_run'])
+    provider_name = args['provider']
+    provider = ImageProvider(provider_name, URLS[provider_name])
+    provider.download(bucket, full_out_path, args['cache_dir'],
+                      tnum=(args['cols'], args['cols']),
+                      theight=args['theight'], dry_run=args['dry_run'])
 
 
 
