@@ -343,7 +343,7 @@ def main():
     parser.add_argument('--dry_run', dest='dry_run', action='store_true', default=False, help="If set, do not download anything, but show what would be downloaded.")
     parser.add_argument('--verbose', dest='verbose', action='store_true', default=False, help="If set, be verbose")
     parser.add_argument('--scenery_folder', type=str, required=False, default=os.getcwd(), help="Scenery directory, for the output")
-    parser.add_argument('--cache-dir', default=DEFAULT_CACHE_DIR,
+    parser.add_argument('--cache_dir', default=DEFAULT_CACHE_DIR,
                         help="""\
 Directory where downloaded tiles are stored before they can be assembled""")
     parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False, help='Overwrite the orthophoto if it already exists')
