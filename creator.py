@@ -335,17 +335,17 @@ def main():
     parser.add_argument('--index', type=int, required=False, help="FG tile index to download. It has preference on lat,lon")
     parser.add_argument('--lon', type=float, required=False, help="Longitude included inside the tile to download. Ignored if an index is provided")
     parser.add_argument('--lat', type=float, required=False, help="Latitude included inside the tile to download. Ignored if an index is provided")
-    parser.add_argument('--info_only', dest='info_only', action='store_true', default=False, help="Print bucket information and exit.")
+    parser.add_argument('--info_only', '--info-only', dest='info_only', action='store_true', default=False, help="Print bucket information and exit.")
     parser.add_argument('--theight', type=int, required=False, default=2048, help='''
         Height of a tile, in pixels. Defaults to 2048. The final image will have theight*cols pixels. Use only power of two numbers.
         Note that most orthophoto servers will not serve orthophotos with any dimension greater than 4096.
     ''')
     parser.add_argument('--cols', type=int, default=1, help="Number of rows and cols for tiles in a bucket. Use only power of two numbers ")
     parser.add_argument('--provider', default='ArcGIS', help="Name of the image provider. Currently: ArcGIS (default, covers the whole world), PNOA (Spain), or USGS (United States)")
-    parser.add_argument('--dry_run', dest='dry_run', action='store_true', default=False, help="If set, do not download anything, but show what would be downloaded.")
+    parser.add_argument('--dry_run', '--dry-run', dest='dry_run', action='store_true', default=False, help="If set, do not download anything, but show what would be downloaded.")
     parser.add_argument('--verbose', dest='verbose', action='store_true', default=False, help="If set, be verbose")
-    parser.add_argument('--scenery_folder', type=str, required=False, default=os.getcwd(), help="Scenery directory, for the output")
-    parser.add_argument('--cache_dir', default=DEFAULT_CACHE_DIR,
+    parser.add_argument('--scenery_folder', '--scenery-folder', type=str, required=False, default=os.getcwd(), help="Scenery directory, for the output")
+    parser.add_argument('--cache_dir', '--cache-dir', default=DEFAULT_CACHE_DIR,
                         help="""\
 Directory where downloaded tiles are stored before they can be assembled""")
     parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False, help='Overwrite the orthophoto if it already exists')
