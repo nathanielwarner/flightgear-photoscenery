@@ -75,12 +75,32 @@ DEFAULT_CACHE_DIR = find_default_cache_dir()
 
 def get_tile_width(lat):
     """ Gets the width of a FG tile, in degrees. In FG, the width of a tile depends on the latitude """
-    tile_table = [[0, 0.125], [22, 0.25], [62, 0.5], [76, 1], [83, 2], [86, 4], [89, 12]]
-    if lat < 0:
-        lat = abs(lat) - 1
-    for i in range(len(tile_table)):
-        if tile_table[i][0] <= lat < tile_table[i + 1][0]:
-            return float(tile_table[i][1])
+    if lat >= 89.0:
+        return 12.0
+    elif lat >= 86.0:
+        return 4.0
+    elif lat >= 83.0:
+        return 2.0
+    elif lat >= 76.0:
+        return 1.0
+    elif lat >= 62.0:
+        return 0.5
+    elif lat >= 22.0:
+        return 0.25
+    elif lat >= -22.0:
+        return 0.125
+    elif lat >= -62.0:
+        return 0.25
+    elif lat >= -76.0:
+        return 0.5
+    elif lat >= -83.0:
+        return 1.0
+    elif lat >= -86.0:
+        return 2.0
+    elif lat >= -89.0:
+        return 4.0
+    else:
+        return 12.0
 
 
 
