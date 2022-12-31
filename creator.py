@@ -452,7 +452,7 @@ likely to download the same files several times from the same provider.""")
     print('Bucket: %s. Index: %s' % (bucket, bucket.get_index()))
 
     if args['info_only']:
-        exit(0)
+        sys.exit(0)
 
 
     # create the output directory
@@ -464,7 +464,7 @@ likely to download the same files several times from the same provider.""")
 
     if not (args['dry_run'] or args['overwrite']) and os.path.exists(full_out_path):
         logging.error('Target orthophoto already exists, skipping. Pass --overwrite to override this check.')
-        exit(1)
+        sys.exit(1)
 
     provider_name = args['provider']
     provider = ImageProvider(provider_name, URLS[provider_name])
