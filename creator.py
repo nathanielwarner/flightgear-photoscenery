@@ -25,6 +25,8 @@ import requests
 import logging
 import os
 import platform
+import re
+import sys
 import tempfile
 from PIL import Image, UnidentifiedImageError
 
@@ -71,6 +73,52 @@ def find_default_cache_dir():
 
 # Default directory for storing downloaded tiles before they are assembled
 DEFAULT_CACHE_DIR = find_default_cache_dir()
+
+
+def clear_cache(cache_dir, provider):
+    """Clear the tile cache directory for the specified provider.
+
+    Params:
+        cache_dir: base cache directory (which is likely to contain
+                   provider-specific subdirs)
+        provider: a provider name, or the special string 'ALL' to clear
+                  the whole tile cache
+    """
+    with os.scandir(cache_dir) as it:
+        for entry in it:        # iterate over provider-specific subdirs
+            if entry.is_dir() and provider in ("ALL", entry.name):
+                clear_cache_subdir(entry)
+
+
+# Regexp matching the basenames of files that creator.py puts in cache
+cached_file_cre = re.compile(r"^(tmp)?tile-.+\.png") # random suffix allowed
+
+def clear_cache_subdir(direntry):
+    """Clear a subdirectory of the tile cache directory.
+
+    We could use shutil.rmtree() and have much shorter code, however I
+    prefer specifically targetting the files we may have created in
+    order to make it impossible that a programming or user error (e.g.,
+    when using --cache-dir) results in a catastrophe.
+
+    Params:
+        direntry: an os.DirEntry instance for a subdirectory of the tile
+                  cache directory (i.e., 'direntry' normally corresponds
+                  to a particular provider)
+
+    """
+    removed_all = True
+    with os.scandir(direntry) as it:
+        for entry in it:
+            if entry.is_file() and cached_file_cre.match(entry.name):
+                os.unlink(entry)
+            else:
+                removed_all = False
+
+    # If we removed everything inside the provider-specific subdir, remove the
+    # subdir as well.
+    if removed_all:
+        os.rmdir(direntry)
 
 
 def get_tile_width(lat):
@@ -368,10 +416,22 @@ def main():
     parser.add_argument('--cache_dir', '--cache-dir', default=DEFAULT_CACHE_DIR,
                         help="""\
 Directory where downloaded tiles are stored before they can be assembled""")
+    parser.add_argument('--clear_cache', '--clear-cache', metavar='PROVIDER',
+                        help="""\
+Clear the tile cache directory (for creator.py) associated to PROVIDER.
+Specify 'ALL' in order to clear the tile cache directories of all providers.
+Only use this option if you really know what you are doing, otherwise you are
+likely to download the same files several times from the same provider.""")
     parser.add_argument('--overwrite', dest='overwrite', action='store_true', default=False, help='Overwrite the orthophoto if it already exists')
     args = vars(parser.parse_args())
 
     logging.basicConfig(level=(logging.DEBUG if args['verbose'] else logging.INFO))
+
+    if args['clear_cache'] is None:
+        cache_cleared = False
+    else:
+        clear_cache(args['cache_dir'], args['clear_cache'])
+        cache_cleared = True
 
     index = args['index']
     lon = args['lon']
@@ -382,14 +442,17 @@ Directory where downloaded tiles are stored before they can be assembled""")
         bucket = Bucket.from_index(index)
     elif lon is not None and lat is not None:
         bucket = Bucket.from_lon_lat(lon, lat)
+    elif cache_cleared:         # allow using --clear-cache on its own
+        sys.exit(0)
     else:
-        logging.error('You gotta give me lon, lat or index!')
-        exit(1)
+        logging.error('You gotta give me lon, lat or index (or some other '
+                      'action like --clear-cache)!')
+        sys.exit(1)
 
     print('Bucket: %s. Index: %s' % (bucket, bucket.get_index()))
 
     if args['info_only']:
-        exit(0)
+        sys.exit(0)
 
 
     # create the output directory
@@ -401,7 +464,7 @@ Directory where downloaded tiles are stored before they can be assembled""")
 
     if not (args['dry_run'] or args['overwrite']) and os.path.exists(full_out_path):
         logging.error('Target orthophoto already exists, skipping. Pass --overwrite to override this check.')
-        exit(1)
+        sys.exit(1)
 
     provider_name = args['provider']
     provider = ImageProvider(provider_name, URLS[provider_name])
